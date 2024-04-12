@@ -586,11 +586,11 @@
             </div>
 
             <div class="info" class:bg-warning={crop.warning} class:text-warning-emphasis={crop.warning}>
+                Crop
                 {#if crop.warning}
-                    <i class="bi bi-exclamation-triangle me-1"
+                    <i class="bi bi-exclamation-triangle mx-1"
                        title="Crop area extends beyond image"></i>
                 {/if}
-                Crop
             </div>
             <div>
                 <label>
