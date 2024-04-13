@@ -527,13 +527,11 @@
             width: x_max - x_min - 1,
             height: y_max - y_min - 1
         }).toBlob((blob) => {
-            saveCallback(blob).then((result) => {
+            saveCallback(blob).then(() => {
                 saving = false
-                console.log("saved")
-            }).catch((e) => {
+            }).catch(() => {
                 saving = false
                 saveError = true
-                console.log("error")
             })
         })
     }

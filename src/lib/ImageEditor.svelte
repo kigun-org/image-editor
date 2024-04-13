@@ -46,7 +46,7 @@
 
         if (ev.dataTransfer.items) {
             // Use DataTransferItemList interface to access the file(s)
-            [...ev.dataTransfer.items].forEach((item, i) => {
+            [...ev.dataTransfer.items].forEach((item) => {
                 // If dropped items aren't files, reject them
                 if (item.kind === "file") {
                     imageBlob = item.getAsFile()
@@ -54,7 +54,7 @@
             })
         } else {
             // Use DataTransfer interface to access the file(s)
-            [...ev.dataTransfer.files].forEach((file, i) => {
+            [...ev.dataTransfer.files].forEach((file) => {
                 imageBlob = file
             })
         }
