@@ -9,6 +9,7 @@
 
     export let saveCallback
     let saving = false
+    let saveError = false
 
     let canvasElement
 
@@ -528,8 +529,11 @@
         }).toBlob((blob) => {
             saveCallback(blob).then((result) => {
                 saving = false
+                console.log("saved")
             }).catch((e) => {
                 saving = false
+                saveError = true
+                console.log("error")
             })
         })
     }
@@ -646,9 +650,16 @@
         </button>
 
         <div style="position: relative; width: 100%">
-            <button class="btn btn-lg btn-primary w-100" on:click={saveImage}>
+            <button class="btn btn-lg btn-primary w-100" class:btn-primary={!saveError}
+                    class:btn-danger={saveError} disabled={saveError}
+                    on:click={saveImage}>
+                {#if saveError}
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Error
+                {:else}
                 <i class="bi bi-save me-1"></i>
                 Save
+                {/if}
             </button>
             <div class="loading" class:invisible={!saving}>
                 <div class="spinner-border" role="status">

@@ -64,14 +64,6 @@
         imageBlob = ev.target.files[0]
     }
 
-    function uploadCallback(blob) {
-        return saveCallback(blob).then((result) => {
-            dispatch('saveComplete', null)
-        }).catch((ex) => {
-            dispatch('saveError', null)
-        })
-    }
-
     onMount(() => {
         document.addEventListener('paste', async (e) => {
             e.preventDefault()
@@ -89,7 +81,7 @@
 
 <div class="upload-container" on:dragover={handleDragOver} on:drop={handleDrop} role="form">
     {#if imageBlob !== undefined}
-        <EditorComponent originalImageBlob={imageBlob} {validators} saveCallback={uploadCallback} />
+        <EditorComponent originalImageBlob={imageBlob} {validators} {saveCallback} />
     {:else if showBrowser}
         <div class="browse text-start p-2 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between my-2">

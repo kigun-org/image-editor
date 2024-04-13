@@ -18,13 +18,6 @@ export default defineConfig({
                 'bootstrap/dist/css/bootstrap.css',
                 'bootstrap-icons/font/bootstrap-icons.css'
             ],
-            output: {
-                manualChunks: (id) => {
-                    if (id.includes('node_modules')) {
-                        return 'common'
-                    }
-                }
-            }
         },
         lib: {
             entry: [
