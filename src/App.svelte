@@ -2,41 +2,31 @@
     import 'bootstrap-icons/font/bootstrap-icons.css'
     import 'bootstrap/dist/css/bootstrap.css'
 
-    import ImageUpload from "./lib/ImageUpload.svelte";
+    import ImageEditor from "./lib/ImageEditor.svelte";
 
-    let imageUploadDialog
-    let imageUploadComponent
-    let imageUploaded = false
+    let imageSources = []
 
-    function handleUploadComplete() {
-        imageUploadDialog.close()
-        imageUploadComponent.$destroy() // free some memory
-        imageUploaded = true
+    function downloadCallback(blob) {
+        return new Promise((resolve) => {
+            imageSources = [...imageSources, URL.createObjectURL(blob)]
+            resolve()
+        })
     }
 </script>
 
-<main>
-    <div class="row mb-5">
-        <h1 class="mb-4">Image Editor demo</h1>
+<ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback}/>
 
-        <div class="d-flex align-items-center justify-content-center gap-2">
-            {#if imageUploaded}
-                <div class="bg-success-subtle d-flex align-items-center px-3">
-                    <i class="bi bi-check-lg text-success fs-3 me-2"></i>
-                    <span>Uploaded</span>
-                </div>
-            {:else}
-                <button on:click={() => imageUploadDialog.showModal()}>click me</button>
-            {/if}
-        </div>
+{#if imageSources.length > 0}
+    <div class="my-3">Images</div>
+    <div class="screenshots d-flex flex-wrap gap-2">
+        {#each imageSources as src}
+            <img src={src} alt="Screenshot"/>
+        {/each}
     </div>
-</main>
+{/if}
 
-<dialog bind:this={imageUploadDialog}>
-    <div style="min-width: 60rem">
-        <ImageUpload bind:this={imageUploadComponent}
-                     galleryURL="/1/images"
-                     upload={ {url:"/1/images", params: {a:"b"}} }
-                     on:uploadComplete={handleUploadComplete}/>
-    </div>
-</dialog>
+<style>
+    .screenshots img {
+        height: 100px;
+    }
+</style>

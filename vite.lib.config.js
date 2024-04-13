@@ -28,9 +28,7 @@ export default defineConfig({
         },
         lib: {
             entry: [
-                resolve(__dirname, 'src/lib/ImageUpload.svelte'),
                 resolve(__dirname, 'src/lib/ImageEditor.svelte'),
-                resolve(__dirname, 'src/lib/SelectImage.svelte'),
             ],
             formats: ['es'],
             fileName: (_, entryAlias) => `${entryAlias}.js`,

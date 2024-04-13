@@ -1,4 +1,3 @@
-<svelte:options customElement={{tag: "select-image", shadow: 'none'}}/>
 <script>
     import {createEventDispatcher} from "svelte";
 
@@ -44,7 +43,7 @@
                 <div>No images</div>
             {/each}
         </div>
-    {:catch}
+    {:catch ex}
         <div class="d-flex flex-column align-items-center justify-content-center gap-4 h-100 bg-danger-subtle text-danger">
             <i class="bi bi-exclamation-triangle fs-1"></i>
             <div class="text-center">

@@ -1,13 +1,31 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image Editor</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<html lang="en" class="h-100">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/svg+xml" href="/vite.svg"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>kigun &mdash; Image editor</title>
+</head>
+<body class="d-flex flex-column h-100">
+
+<main class="container flex-shrink-0 my-4">
+  <h1 class="mb-4">Image Editor</h1>
+
+  <p>
+    A web-based image editor for quickly editing your images.
+  </p>
+
+  <p class="mb-4">
+    To begin, click inside the box below and select an image from your computer or paste it in.<br>
+    All processing is performed in the browser, and nothing is uploaded to the server.
+  </p>
+
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</main>
+
+<footer class="mt-auto p-4 text-center bg-light text-secondary w-100">
+  &copy; <a href="https://kigun.org/">Kigun</a> Limited
+</footer>
+</body>
 </html>
