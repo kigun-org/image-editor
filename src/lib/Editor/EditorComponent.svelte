@@ -1,5 +1,5 @@
 <script>
-    import {Canvas, Circle, filters, Group, Image as FabricImage, Line, Path, Rect, Triangle} from 'fabric';
+    import {config, Canvas, Circle, filters, Group, Image as FabricImage, Line, Path, Rect, Triangle} from 'fabric'
     import {onMount} from "svelte";
 
     export let originalImageBlob
@@ -15,6 +15,8 @@
 
     let canvas
     let canvasImage
+
+    let maxTextureSize = 4096
 
     let crop = {
         rect: undefined,
@@ -159,6 +161,8 @@
     }
 
     onMount(() => {
+        config.textureSize = maxTextureSize
+
         canvas = new Canvas(canvasElement, {
             backgroundColor: "dimgray",
             preserveObjectStacking: true
@@ -364,7 +368,7 @@
 
     function adjustContrast(contrast) {
         if (canvasImage !== undefined) {
-            canvasImage.filters[0] = new filters.Contrast({contrast: contrast * 0.01})
+            canvasImage.filters[0].contrast = contrast * 0.01
             canvasImage.applyFilters()
             canvas.renderAll()
         }
@@ -374,7 +378,7 @@
 
     function adjustBrightness(brightness) {
         if (canvasImage !== undefined) {
-            canvasImage.filters[1] = new filters.Brightness({brightness: brightness * 0.01})
+            canvasImage.filters[1].brightness = brightness * 0.01
             canvasImage.applyFilters()
             canvas.renderAll()
         }
@@ -602,6 +606,7 @@
                 </label>
             </div>
 
+            {#if canvasImage !== undefined && canvasImage.width <= maxTextureSize && canvasImage.height < maxTextureSize}
             <div class="info">
                 Adjust image
             </div>
@@ -619,6 +624,7 @@
                 <br>
                 <input bind:value={contrast} max="30" min="-30" step="1" type="range">
             </div>
+            {/if}
 
             <div class="info">
                 Markers
