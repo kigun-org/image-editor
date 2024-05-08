@@ -649,7 +649,7 @@
         margin: 0 auto;
     }
 
-    :global(canvas) {
+    #canvasContainer canvas, :global(#backgroundCanvas canvas) {
         width: 100%;
         height: 100%;
     }
