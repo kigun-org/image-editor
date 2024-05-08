@@ -1,8 +1,10 @@
 <script>
-    import {config, Canvas, Circle, filters, Group, Image as FabricImage, Line, Path, Rect, Triangle} from 'fabric'
+    import {Canvas, Circle, Group, Image as FabricImage, Line, Path, Rect, Triangle} from 'fabric'
     import {onMount} from "svelte";
+    import BackgroundComponent from "./BackgroundComponent.svelte";
 
     export let originalImageBlob
+    const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
 
     export let validators
     let warnings = []
@@ -11,12 +13,12 @@
     let saving = false
     let saveError = false
 
+    let background
+
     let canvasElement
 
     let canvas
-    let canvasImage
-
-    let maxTextureSize = 4096
+    let imagePlaceholder
 
     let crop = {
         rect: undefined,
@@ -29,7 +31,7 @@
     let flipV = false
     let rotation = 0
 
-    let brightness = 0
+    let brightness = 1
     let contrast = 0
 
     let markers = []
@@ -118,9 +120,9 @@
     }
 
     function initCrop() {
-        crop.rect = createCropRect(canvasImage)
+        crop.rect = createCropRect(imagePlaceholder)
         crop.background = createCropBackground(canvas)
-        crop.grid = createGrid(canvasImage)
+        crop.grid = createGrid(imagePlaceholder)
 
         canvas.add(crop.background)
         canvas.add(crop.rect)
@@ -149,9 +151,9 @@
         crop.grid.setCoords()
 
         const rectBoundingRect = crop.rect.getBoundingRect()
-        const imageBoundingRect = canvasImage.getBoundingRect()
-        crop.warning = !(crop.rect.isContainedWithinObject(canvasImage)
-            || ((canvasImage.angle % 90 === 0)
+        const imageBoundingRect = imagePlaceholder.getBoundingRect()
+        crop.warning = !(crop.rect.isContainedWithinObject(imagePlaceholder)
+            || ((imagePlaceholder.angle % 90 === 0)
                 && ((rectBoundingRect.top >= imageBoundingRect.top)
                     && (rectBoundingRect.left >= imageBoundingRect.left)
                     && (rectBoundingRect.left + rectBoundingRect.width <= imageBoundingRect.left + imageBoundingRect.width)
@@ -161,33 +163,33 @@
     }
 
     onMount(() => {
-        config.textureSize = maxTextureSize
-
         canvas = new Canvas(canvasElement, {
-            backgroundColor: "dimgray",
+            backgroundColor: "rgba(0,0,0,0)",
             preserveObjectStacking: true
         })
-
-        const URLObj = window.URL || window.webkitURL
-        const imageDataURL = URLObj.createObjectURL(originalImageBlob)
 
         validate(imageDataURL, validators)
 
         FabricImage.fromURL(imageDataURL).then((img) => {
-            canvasImage = img
+            imagePlaceholder = img
 
-            canvasImage.filters.push(new filters.Contrast({contrast: 0})) // 0
-            canvasImage.filters.push(new filters.Brightness({brightness: 0})) // 1
+            imagePlaceholder = new Rect({
+                left: img.left,
+                top: img.top,
+                width: img.width,
+                height: img.height,
+                fill: 'transparent'
+            })
 
-            const maxDimension = Math.max(canvasImage.width, canvasImage.height)
+            const maxDimension = Math.max(imagePlaceholder.width, imagePlaceholder.height)
 
             canvas.setDimensions({width: maxDimension, height: maxDimension}, {backstoreOnly: true})
             canvas.setDimensions({width: "100%", height: "100%"}, {cssOnly: true})
 
-            canvasImage.selectable = false
+            imagePlaceholder.selectable = false
 
-            canvas.add(canvasImage)
-            canvas.centerObject(canvasImage)
+            canvas.add(imagePlaceholder)
+            canvas.centerObject(imagePlaceholder)
 
             initCrop()
 
@@ -301,26 +303,7 @@
         })
     })
 
-    $: flipHorizontal(flipH)
-
-    function flipHorizontal(flipValue) {
-        if (canvasImage !== undefined) {
-            canvasImage.flipX = flipValue
-            canvas.renderAll()
-        }
-    }
-
-    $: flipVertical(flipV)
-
-    function flipVertical(flipValue) {
-        if (canvasImage !== undefined) {
-            canvasImage.flipY = flipValue
-            canvas.renderAll()
-        }
-    }
-
     $: adjustRotation(rotation)
-
     function adjustRotation(newValue) {
         if (canvas !== undefined) {
             if (newValue > 180) {
@@ -328,8 +311,8 @@
             } else if (rotation < -180) {
                 rotation = 180 + newValue % 180
             }
-            canvasImage.rotate(rotation)
-            canvasImage.setCoords()
+            imagePlaceholder.rotate(rotation)
+            imagePlaceholder.setCoords()
 
             if ((rotation > 45 && rotation < 135) || (rotation < -45 && rotation > -135)) {
                 crop.rect.rotate(90)
@@ -346,7 +329,6 @@
     function handleRotationStart() {
         crop.grid.visible = true
         canvas.renderAll()
-
     }
 
     function handleRotationEnd() {
@@ -360,26 +342,6 @@
     function updateKeepAspectRatio(value) {
         if (crop.rect !== undefined) {
             crop.rect.setControlsVisibility({mt: !value, mr: !value, mb: !value, ml: !value})
-            canvas.renderAll()
-        }
-    }
-
-    $: adjustContrast(contrast)
-
-    function adjustContrast(contrast) {
-        if (canvasImage !== undefined) {
-            canvasImage.filters[0].contrast = contrast * 0.01
-            canvasImage.applyFilters()
-            canvas.renderAll()
-        }
-    }
-
-    $: adjustBrightness(brightness)
-
-    function adjustBrightness(brightness) {
-        if (canvasImage !== undefined) {
-            canvasImage.filters[1].brightness = brightness * 0.01
-            canvasImage.applyFilters()
             canvas.renderAll()
         }
     }
@@ -477,16 +439,16 @@
 
     function resetCrop() {
         crop.rect.set({
-            left: canvasImage.left,
-            top: canvasImage.top,
-            width: canvasImage.width,
-            height: canvasImage.height,
+            left: imagePlaceholder.left,
+            top: imagePlaceholder.top,
+            width: imagePlaceholder.width,
+            height: imagePlaceholder.height,
             angle: 0,
             scaleX: 1,
             scaleY: 1
         })
-        crop.rect.lastGoodTop = canvasImage.top
-        crop.rect.lastGoodLeft = canvasImage.left
+        crop.rect.lastGoodTop = imagePlaceholder.top
+        crop.rect.lastGoodLeft = imagePlaceholder.left
         crop.rect.lastGoodScale = 1
         crop.rect.setCoords()
 
@@ -498,11 +460,10 @@
         flipV = false
         rotation = 0
         adjustRotation(0)
-
         resetCrop()
 
+        brightness = 1
         contrast = 0
-        brightness = 0
 
         for (const marker of markers) {
             canvas.remove(marker)
@@ -521,6 +482,10 @@
         const y_min = Math.min(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
         const y_max = Math.max(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
 
+        canvas.backgroundImage = new FabricImage(background.exportCanvas())
+        canvas.centerObject(canvas.backgroundImage)
+        canvas.backgroundColor = 'dimgray'
+
         /*
          * Output PNG (lossless) to upload to server
          * Could add ("image/webp", 1) arguments, but not supported by Safari
@@ -537,13 +502,19 @@
                 saving = false
                 saveError = true
             })
+            canvas.backgroundImage = undefined
+            canvas.backgroundColor = undefined
         })
     }
 </script>
 
 <div style="display: flex; gap: 1rem; max-width: 1200px">
     <div class="main" style="flex-grow: 1">
-        <div id="canvasContainer">
+        <div id="canvasContainer" style="position: relative">
+            <div id="backgroundCanvas" style="position: absolute">
+                <BackgroundComponent bind:this={background} dataURL={imageDataURL}
+                                     {brightness} {contrast} {rotation} {flipH} {flipV} />
+            </div>
             <canvas bind:this={canvasElement}></canvas>
         </div>
 
@@ -606,25 +577,23 @@
                 </label>
             </div>
 
-            {#if canvasImage !== undefined && canvasImage.width <= maxTextureSize && canvasImage.height < maxTextureSize}
             <div class="info">
                 Adjust image
             </div>
             <div class="mx-2">
                 <i class="bi bi-brightness-high"></i>
                 Brightness
-                <small>({brightness}%)</small>
+                <small>({Math.round((brightness - 1) * 100)}%)</small>
                 <br>
-                <input bind:value={brightness} max="30" min="-30" step="1" type="range">
+                <input bind:value={brightness} max="1.25" min="0.75" step="0.01" type="range">
             </div>
             <div class="mx-2">
                 <i class="bi bi-circle-half"></i>
                 Contrast
-                <small>({contrast}%)</small>
+                <small>({Math.round(contrast * 100)}%)</small>
                 <br>
-                <input bind:value={contrast} max="30" min="-30" step="1" type="range">
+                <input bind:value={contrast} max="0.25" min="-0.25" step="0.01" type="range">
             </div>
-            {/if}
 
             <div class="info">
                 Markers
@@ -654,15 +623,15 @@
         </button>
 
         <div style="position: relative; width: 100%">
-            <button class="btn btn-lg btn-primary w-100" class:btn-primary={!saveError}
-                    class:btn-danger={saveError} disabled={saveError}
+            <button class="btn btn-lg btn-primary w-100" class:btn-danger={saveError}
+                    class:btn-primary={!saveError} disabled={saveError}
                     on:click={saveImage}>
                 {#if saveError}
-                <i class="bi bi-exclamation-triangle me-1"></i>
-                Error
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Error
                 {:else}
-                <i class="bi bi-save me-1"></i>
-                Save
+                    <i class="bi bi-save me-1"></i>
+                    Save
                 {/if}
             </button>
             <div class="loading" class:invisible={!saving}>
@@ -697,7 +666,7 @@
         margin: 0 auto;
     }
 
-    canvas {
+    :global(canvas) {
         width: 100%;
         height: 100%;
     }
