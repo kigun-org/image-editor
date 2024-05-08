@@ -15,9 +15,12 @@ export default defineConfig({
     build: {
         rollupOptions: {
             external: [
-                'bootstrap/dist/css/bootstrap.css',
-                'bootstrap-icons/font/bootstrap-icons.css'
+                'bootstrap',
+                'bootstrap-icons'
             ],
+            output: {
+                manualChunks: (_) => "common"
+            }
         },
         lib: {
             entry: [
