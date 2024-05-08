@@ -19,6 +19,7 @@
 
     let canvas
     let imagePlaceholder
+    let maxDimension
 
     let crop = {
         rect: undefined,
@@ -36,6 +37,48 @@
 
     let markers = []
     let activeMarker
+
+    function handleRotationStart() {
+        crop.grid.visible = true
+        canvas.renderAll()
+    }
+
+    function handleRotationEnd() {
+        crop.grid.visible = false
+        canvas.renderAll()
+    }
+
+    $: adjustRotation(rotation)
+    function adjustRotation(newValue) {
+        if (canvas !== undefined) {
+            if (newValue > 180) {
+                rotation = -180 + newValue % 180
+            } else if (rotation < -180) {
+                rotation = 180 + newValue % 180
+            }
+            imagePlaceholder.rotate(rotation)
+            imagePlaceholder.setCoords()
+
+            if ((rotation > 45 && rotation < 135) || (rotation < -45 && rotation > -135)) {
+                crop.rect.rotate(90)
+            } else {
+                crop.rect.rotate(0)
+            }
+            crop.rect.setCoords()
+            updateCrop()
+
+            canvas.renderAll()
+        }
+    }
+
+    let keepAspectRatio = true
+    $: updateKeepAspectRatio(keepAspectRatio)
+    function updateKeepAspectRatio(newValue) {
+        if (crop.rect !== undefined) {
+            crop.rect.setControlsVisibility({mt: !newValue, mr: !newValue, mb: !newValue, ml: !newValue})
+            canvas.renderAll()
+        }
+    }
 
     function validate(imageDataURL, validators) {
         const testImage = new Image()
@@ -66,8 +109,8 @@
             strokeWidth: 0,
             minScaleLimit: 0.2,
             lockScalingFlip: true,
-            cornerSize: image.width * 0.02,
-            borderScaleFactor: 3,
+            cornerSize: maxDimension * 0.015,
+            borderScaleFactor: maxDimension * 0.002,
             transparentCorners: false,
         })
         rect.setControlsVisibility({
@@ -101,8 +144,8 @@
 
         const lineProperties = {
             stroke: "rgba(255, 255, 255, 0.75)",
-            strokeWidth: 3,
-            strokeDashArray: [20, 20]
+            strokeWidth: maxDimension * 0.001,
+            strokeDashArray: [maxDimension * 0.01, maxDimension * 0.01]
         }
 
         const gridLines = []
@@ -162,26 +205,170 @@
         canvas.renderAll()
     }
 
+    function drawArrow() {
+        const unit = maxDimension * 0.025
+        const path = `M 0 0 l -${2*unit} -${1.5*unit} v ${unit} h -${2*unit} v ${unit} h ${2*unit} v ${unit} l ${2*unit} -${1.5 * unit} Z`
+        const arrow = new Path(path, {
+            top: maxDimension / 2 - 1.5 * unit,
+            left: maxDimension / 2 - 4 * unit,
+            inverted: true,
+            fill: 'yellow',
+            cornerSize: maxDimension * 0.01,
+            borderScaleFactor: maxDimension * 0.002,
+            transparentCorners: false,
+            lockScalingFlip: true,
+            minScaleLimit: 0.5,
+        })
+        arrow.setControlsVisibility({
+            tl: false, tr: false, br: false,
+            mt: false, mr: false, mb: false, ml: false,
+        })
+
+        markers.push(arrow)
+
+        canvas.add(arrow)
+        canvas.setActiveObject(arrow)
+        canvas.renderAll()
+    }
+
+    function drawCircle() {
+        const circle = new Circle({
+            left: maxDimension / 2 - maxDimension * 0.055,
+            top: maxDimension / 2 - maxDimension * 0.055,
+            radius: maxDimension * 0.05,
+            strokeWidth: maxDimension * 0.01,
+            stroke: 'yellow',
+            fill: 'transparent',
+            cornerSize: maxDimension * 0.01,
+            borderScaleFactor: maxDimension * 0.002,
+            transparentCorners: false,
+            lockScalingFlip: true,
+            minScaleLimit: 0.5
+        })
+        circle.setControlsVisibility({
+            mt: false, mr: false, mb: false, ml: false, mtr: false
+        })
+
+        markers.push(circle)
+
+        canvas.add(circle)
+        canvas.setActiveObject(circle)
+        canvas.renderAll()
+    }
+
+    function drawRect() {
+        const rect = new Rect({
+            left: maxDimension / 2 - maxDimension * 0.08,
+            top: maxDimension / 2 - maxDimension * 0.04,
+            width: maxDimension * 0.16,
+            height: maxDimension * 0.08,
+            fill: 'dimgray',
+            cornerSize: maxDimension * 0.01,
+            borderScaleFactor: maxDimension * 0.002,
+            transparentCorners: false,
+            lockScalingFlip: true,
+            minScaleLimit: 0.5
+        })
+        rect.setControlsVisibility({mtr: false})
+
+        markers.push(rect)
+
+        canvas.add(rect)
+        canvas.setActiveObject(rect)
+        canvas.renderAll()
+    }
+
+    function deleteSelectedMarker() {
+        canvas.remove(activeMarker)
+        activeMarker = undefined
+    }
+
+    function resetCrop() {
+        crop.rect.set({
+            left: imagePlaceholder.left,
+            top: imagePlaceholder.top,
+            width: imagePlaceholder.width,
+            height: imagePlaceholder.height,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1
+        })
+        crop.rect.lastGoodTop = imagePlaceholder.top
+        crop.rect.lastGoodLeft = imagePlaceholder.left
+        crop.rect.lastGoodScale = 1
+        crop.rect.setCoords()
+
+        updateCrop()
+    }
+
+    function reset() {
+        flipH = false
+        flipV = false
+        rotation = 0
+        adjustRotation(0)
+        resetCrop()
+
+        brightness = 1
+        contrast = 0
+
+        for (const marker of markers) {
+            canvas.remove(marker)
+        }
+    }
+
+    function saveImage() {
+        saving = true
+
+        canvas.discardActiveObject()
+        canvas.renderAll()
+
+        const coords = crop.rect.getCoords()
+        const x_min = Math.min(coords[0].x, coords[1].x, coords[2].x, coords[3].x)
+        const x_max = Math.max(coords[0].x, coords[1].x, coords[2].x, coords[3].x)
+        const y_min = Math.min(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
+        const y_max = Math.max(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
+
+        canvas.backgroundImage = new FabricImage(background.exportCanvas())
+        canvas.centerObject(canvas.backgroundImage)
+        canvas.backgroundColor = 'dimgray'
+
+        /*
+         * Output PNG (lossless) to upload to server
+         * Could add ("image/webp", 1) arguments, but not supported by Safari
+         */
+        canvas.toCanvasElement(1, {
+            left: x_min,
+            top: y_min,
+            width: x_max - x_min - 1,
+            height: y_max - y_min - 1
+        }).toBlob((blob) => {
+            saveCallback(blob).then(() => {
+                saving = false
+            }).catch(() => {
+                saving = false
+                saveError = true
+            })
+            canvas.backgroundImage = undefined
+            canvas.backgroundColor = undefined
+        })
+    }
+
     onMount(() => {
         canvas = new Canvas(canvasElement, {
             backgroundColor: "rgba(0,0,0,0)",
-            preserveObjectStacking: true
+            preserveObjectStacking: true,
+            selection: false
         })
 
         validate(imageDataURL, validators)
 
         FabricImage.fromURL(imageDataURL).then((img) => {
-            imagePlaceholder = img
-
             imagePlaceholder = new Rect({
-                left: img.left,
-                top: img.top,
-                width: img.width,
-                height: img.height,
+                left: img.left, top: img.top, width: img.width, height: img.height,
                 fill: 'transparent'
             })
 
-            const maxDimension = Math.max(imagePlaceholder.width, imagePlaceholder.height)
+            maxDimension = Math.max(imagePlaceholder.width, imagePlaceholder.height)
 
             canvas.setDimensions({width: maxDimension, height: maxDimension}, {backstoreOnly: true})
             canvas.setDimensions({width: "100%", height: "100%"}, {cssOnly: true})
@@ -302,210 +489,6 @@
             canvas.on("selection:cleared", onSelectionUpdated)
         })
     })
-
-    $: adjustRotation(rotation)
-    function adjustRotation(newValue) {
-        if (canvas !== undefined) {
-            if (newValue > 180) {
-                rotation = -180 + newValue % 180
-            } else if (rotation < -180) {
-                rotation = 180 + newValue % 180
-            }
-            imagePlaceholder.rotate(rotation)
-            imagePlaceholder.setCoords()
-
-            if ((rotation > 45 && rotation < 135) || (rotation < -45 && rotation > -135)) {
-                crop.rect.rotate(90)
-            } else {
-                crop.rect.rotate(0)
-            }
-            crop.rect.setCoords()
-            updateCrop()
-
-            canvas.renderAll()
-        }
-    }
-
-    function handleRotationStart() {
-        crop.grid.visible = true
-        canvas.renderAll()
-    }
-
-    function handleRotationEnd() {
-        crop.grid.visible = false
-        canvas.renderAll()
-    }
-
-    let keepAspectRatio = true
-    $: updateKeepAspectRatio(keepAspectRatio)
-
-    function updateKeepAspectRatio(value) {
-        if (crop.rect !== undefined) {
-            crop.rect.setControlsVisibility({mt: !value, mr: !value, mb: !value, ml: !value})
-            canvas.renderAll()
-        }
-    }
-
-    function drawArrow() {
-        const triangle = new Triangle({
-            left: 500,
-            top: 500,
-            width: 100,
-            height: 150,
-            fill: 'yellow',
-            angle: 0
-        })
-        const line = new Line([0, 0, 0, 150], {
-            left: 540,
-            top: 600,
-            stroke: 'yellow',
-            strokeWidth: 20
-        });
-
-        const arrow = new Group([line, triangle]);
-        arrow.rotate(90)
-
-        arrow.cornerSize = 2000 * 0.02
-        arrow.borderScaleFactor = 2
-        arrow.transparentCorners = false
-        arrow.setControlsVisibility({
-            tl: false, tr: false, br: false,
-            mt: false, mr: false, mb: false, ml: false,
-        })
-        arrow.lockScalingFlip = true
-        arrow.minScaleLimit = 0.5
-
-        markers.push(arrow)
-
-        canvas.add(arrow)
-        canvas.setActiveObject(arrow)
-        canvas.renderAll()
-    }
-
-    function drawCircle() {
-        const circle = new Circle({
-            left: 500,
-            top: 500,
-            radius: 100,
-            stroke: 'yellow',
-            strokeWidth: 15,
-            fill: 'transparent'
-        })
-
-        circle.cornerSize = 2000 * 0.02
-        circle.borderScaleFactor = 2
-        circle.transparentCorners = false
-        circle.setControlsVisibility({
-            mt: false, mr: false, mb: false, ml: false, mtr: false
-        })
-        circle.lockScalingFlip = true
-        circle.minScaleLimit = 0.5
-
-        markers.push(circle)
-
-        canvas.add(circle)
-        canvas.setActiveObject(circle)
-        canvas.renderAll()
-    }
-
-    function drawRect() {
-        const rect = new Rect({
-            left: 500,
-            top: 500,
-            width: 300,
-            height: 200,
-            fill: 'dimgray'
-        })
-
-        rect.cornerSize = 2000 * 0.02
-        rect.borderScaleFactor = 2
-        rect.transparentCorners = false
-        rect.setControlsVisibility({mtr: false})
-
-        rect.lockScalingFlip = true
-        rect.minScaleLimit = 0.5
-
-        markers.push(rect)
-
-        canvas.add(rect)
-        canvas.setActiveObject(rect)
-        canvas.renderAll()
-    }
-
-    function deleteSelectedMarker() {
-        canvas.remove(activeMarker)
-        activeMarker = undefined
-    }
-
-    function resetCrop() {
-        crop.rect.set({
-            left: imagePlaceholder.left,
-            top: imagePlaceholder.top,
-            width: imagePlaceholder.width,
-            height: imagePlaceholder.height,
-            angle: 0,
-            scaleX: 1,
-            scaleY: 1
-        })
-        crop.rect.lastGoodTop = imagePlaceholder.top
-        crop.rect.lastGoodLeft = imagePlaceholder.left
-        crop.rect.lastGoodScale = 1
-        crop.rect.setCoords()
-
-        updateCrop()
-    }
-
-    function reset() {
-        flipH = false
-        flipV = false
-        rotation = 0
-        adjustRotation(0)
-        resetCrop()
-
-        brightness = 1
-        contrast = 0
-
-        for (const marker of markers) {
-            canvas.remove(marker)
-        }
-    }
-
-    function saveImage() {
-        saving = true
-
-        canvas.discardActiveObject()
-        canvas.renderAll()
-
-        const coords = crop.rect.getCoords()
-        const x_min = Math.min(coords[0].x, coords[1].x, coords[2].x, coords[3].x)
-        const x_max = Math.max(coords[0].x, coords[1].x, coords[2].x, coords[3].x)
-        const y_min = Math.min(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
-        const y_max = Math.max(coords[0].y, coords[1].y, coords[2].y, coords[3].y)
-
-        canvas.backgroundImage = new FabricImage(background.exportCanvas())
-        canvas.centerObject(canvas.backgroundImage)
-        canvas.backgroundColor = 'dimgray'
-
-        /*
-         * Output PNG (lossless) to upload to server
-         * Could add ("image/webp", 1) arguments, but not supported by Safari
-         */
-        canvas.toCanvasElement(1, {
-            left: x_min,
-            top: y_min,
-            width: x_max - x_min - 1,
-            height: y_max - y_min - 1
-        }).toBlob((blob) => {
-            saveCallback(blob).then(() => {
-                saving = false
-            }).catch(() => {
-                saving = false
-                saveError = true
-            })
-            canvas.backgroundImage = undefined
-            canvas.backgroundColor = undefined
-        })
-    }
 </script>
 
 <div style="display: flex; gap: 1rem; max-width: 1200px">
