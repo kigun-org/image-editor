@@ -1,5 +1,5 @@
 <script>
-    import {Application, Assets, ColorMatrixFilter, Graphics, Rectangle, Sprite, Texture} from "pixi.js"
+    import {Application, Assets, ColorMatrixFilter, Sprite} from "pixi.js"
     import {onMount} from "svelte"
 
     export let dataURL
@@ -94,4 +94,12 @@
     })
 </script>
 
-<div bind:this={canvasContainer}></div>
+<div id="backgroundSubContainer" bind:this={canvasContainer}></div>
+
+<style>
+    #backgroundSubContainer,
+    :global(#backgroundSubContainer > canvas) {
+        width: 100%;
+        height: 100%;
+    }
+</style>

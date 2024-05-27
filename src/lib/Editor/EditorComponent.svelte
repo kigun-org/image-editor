@@ -1,5 +1,5 @@
 <script>
-    import {Canvas, Circle, Group, Image as FabricImage, Line, Path, Rect, Triangle} from 'fabric'
+    import {Canvas, Circle, Group, Image as FabricImage, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import BackgroundComponent from "./BackgroundComponent.svelte";
 
@@ -49,6 +49,7 @@
     }
 
     $: adjustRotation(rotation)
+
     function adjustRotation(newValue) {
         if (canvas !== undefined) {
             if (newValue > 180) {
@@ -73,6 +74,7 @@
 
     let keepAspectRatio = true
     $: updateKeepAspectRatio(keepAspectRatio)
+
     function updateKeepAspectRatio(newValue) {
         if (crop.rect !== undefined) {
             crop.rect.setControlsVisibility({mt: !newValue, mr: !newValue, mb: !newValue, ml: !newValue})
@@ -207,7 +209,7 @@
 
     function drawArrow() {
         const unit = maxDimension * 0.025
-        const path = `M 0 0 l -${2*unit} -${1.5*unit} v ${unit} h -${2*unit} v ${unit} h ${2*unit} v ${unit} l ${2*unit} -${1.5 * unit} Z`
+        const path = `M 0 0 l -${2 * unit} -${1.5 * unit} v ${unit} h -${2 * unit} v ${unit} h ${2 * unit} v ${unit} l ${2 * unit} -${1.5 * unit} Z`
         const arrow = new Path(path, {
             top: maxDimension / 2 - 1.5 * unit,
             left: maxDimension / 2 - 4 * unit,
@@ -219,6 +221,7 @@
             lockScalingFlip: true,
             minScaleLimit: 0.5,
         })
+        arrow.controls.mtr.offsetY = -0.0375 * maxDimension
         arrow.setControlsVisibility({
             tl: false, tr: false, br: false,
             mt: false, mr: false, mb: false, ml: false,
@@ -269,7 +272,7 @@
             lockScalingFlip: true,
             minScaleLimit: 0.5
         })
-        rect.setControlsVisibility({mtr: false})
+        rect.controls.mtr.offsetY = -0.0375 * maxDimension
 
         markers.push(rect)
 
@@ -491,18 +494,18 @@
     })
 </script>
 
-<div style="display: flex; gap: 1rem; max-width: 1200px">
-    <div class="main" style="flex-grow: 1">
+<div id="editor_component">
+    <div id="main">
         <div id="canvasContainer" style="position: relative">
-            <div id="backgroundCanvas" style="position: absolute">
-                <BackgroundComponent bind:this={background} dataURL={imageDataURL}
-                                     {brightness} {contrast} {rotation} {flipH} {flipV} />
+            <div id="backgroundContainer" style="position: absolute">
+                <BackgroundComponent bind:this={background} {brightness}
+                                     {contrast} dataURL={imageDataURL} {flipH} {flipV} {rotation}/>
             </div>
             <canvas bind:this={canvasElement}></canvas>
         </div>
 
         {#if warnings.length > 0}
-            <div class="warnings">
+            <div id="warnings">
                 {#each warnings as warning}
                     <div class="alert alert-warning d-flex justify-content-between align-items-center">
                         {warning}
@@ -513,113 +516,124 @@
         {/if}
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 0.5rem">
-        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 1rem">
-            <div class="info">
-                Orientation
-            </div>
+    <div id="toolbar">
+        <div id="controls">
             <div>
+                <h2>
+                    Orientation
+                </h2>
                 <div>
-                    <button class="btn btn-outline-secondary" class:active={flipH} on:click={() => flipH = !flipH}
-                            type="button">
-                        <i class="bi bi-symmetry-vertical"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary" class:active={flipV} on:click={() => flipV = !flipV}
-                            type="button">
-                        <i class="bi bi-symmetry-horizontal"></i>
-                    </button>
+                    <div>
+                        <button class="btn btn-outline-secondary" class:active={flipH} on:click={() => flipH = !flipH}
+                                type="button">
+                            <i class="bi bi-symmetry-vertical"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" class:active={flipV} on:click={() => flipV = !flipV}
+                                type="button">
+                            <i class="bi bi-symmetry-horizontal"></i>
+                        </button>
 
-                    <button class="btn btn-outline-secondary" on:click={() => rotation = rotation + 90}>
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
+                        <button class="btn btn-outline-secondary" on:click={() => rotation = rotation + 90}>
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
 
-                    <button class="btn btn-outline-secondary" on:click={() => rotation = rotation - 90}>
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </button>
+                        <button class="btn btn-outline-secondary" on:click={() => rotation = rotation - 90}>
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+
+                    <div class="m-2">
+                        Rotation ({rotation}&deg;)
+                        <br>
+                        <input bind:value={rotation} max="180" min="-180"
+                               on:pointerdown={handleRotationStart} on:pointerup={handleRotationEnd} step="1"
+                               type="range">
+                    </div>
                 </div>
+            </div>
 
-                <div class="mt-2">
-                    Rotation ({rotation}&deg;)
+            <div>
+                <h2 class:bg-warning={crop.warning} class:text-warning-emphasis={crop.warning}>
+                    Crop
+                    {#if crop.warning}
+                        <i class="bi bi-exclamation-triangle mx-1"
+                           title="Crop area extends beyond image"></i>
+                    {/if}
+                </h2>
+                <div>
+                    <label>
+                        <input bind:checked={keepAspectRatio} type="checkbox">
+                        Keep aspect ratio
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <h2>
+                    Adjust image
+                </h2>
+                <div class="mx-2">
+                    <i class="bi bi-brightness-high"></i>
+                    Brightness
+                    <small>({Math.round((brightness - 1) * 100)}%)</small>
                     <br>
-                    <input bind:value={rotation} max="180" min="-180"
-                           on:pointerdown={handleRotationStart} on:pointerup={handleRotationEnd} step="1" type="range">
+                    <input bind:value={brightness} max="1.25" min="0.75" step="0.01" type="range">
+                </div>
+                <div class="mx-2">
+                    <i class="bi bi-circle-half"></i>
+                    Contrast
+                    <small>({Math.round(contrast * 100)}%)</small>
+                    <br>
+                    <input bind:value={contrast} max="0.25" min="-0.25" step="0.01" type="range">
                 </div>
             </div>
 
-            <div class="info" class:bg-warning={crop.warning} class:text-warning-emphasis={crop.warning}>
-                Crop
-                {#if crop.warning}
-                    <i class="bi bi-exclamation-triangle mx-1"
-                       title="Crop area extends beyond image"></i>
-                {/if}
-            </div>
             <div>
-                <label>
-                    <input bind:checked={keepAspectRatio} type="checkbox">
-                    Keep aspect ratio
-                </label>
-            </div>
+                <h2>
+                    Markers
+                </h2>
+                <div>
+                    <button class="btn btn-outline-secondary" on:click={drawArrow}>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
 
-            <div class="info">
-                Adjust image
-            </div>
-            <div class="mx-2">
-                <i class="bi bi-brightness-high"></i>
-                Brightness
-                <small>({Math.round((brightness - 1) * 100)}%)</small>
-                <br>
-                <input bind:value={brightness} max="1.25" min="0.75" step="0.01" type="range">
-            </div>
-            <div class="mx-2">
-                <i class="bi bi-circle-half"></i>
-                Contrast
-                <small>({Math.round(contrast * 100)}%)</small>
-                <br>
-                <input bind:value={contrast} max="0.25" min="-0.25" step="0.01" type="range">
-            </div>
+                    <button class="btn btn-outline-secondary" on:click={drawCircle}>
+                        <i class="bi bi-circle"></i>
+                    </button>
 
-            <div class="info">
-                Markers
-            </div>
-            <div>
-                <button class="btn btn-outline-secondary" on:click={drawArrow}>
-                    <i class="bi bi-arrow-right"></i>
-                </button>
+                    <button class="btn btn-outline-secondary" on:click={drawRect}>
+                        <i class="bi bi-square-fill"></i>
+                    </button>
 
-                <button class="btn btn-outline-secondary" on:click={drawCircle}>
-                    <i class="bi bi-circle"></i>
-                </button>
-
-                <button class="btn btn-outline-secondary" on:click={drawRect}>
-                    <i class="bi bi-square-fill"></i>
-                </button>
-
-                <button class="btn btn-outline-danger" disabled={!markers.includes(activeMarker)}
-                        on:click={deleteSelectedMarker}>
-                    <i class="bi bi-trash"></i>
-                </button>
+                    <button class="btn btn-outline-danger" disabled={!markers.includes(activeMarker)}
+                            on:click={deleteSelectedMarker}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <button class="btn btn-outline-secondary mb-2" on:click={() => reset()}>
-            Reset changes
-        </button>
-
-        <div style="position: relative; width: 100%">
-            <button class="btn btn-lg btn-primary w-100" class:btn-danger={saveError}
-                    class:btn-primary={!saveError} disabled={saveError}
-                    on:click={saveImage}>
-                {#if saveError}
-                    <i class="bi bi-exclamation-triangle me-1"></i>
-                    Error
-                {:else}
-                    <i class="bi bi-save me-1"></i>
-                    Save
-                {/if}
+        <div id="buttons_bottom">
+            <button class="btn btn-outline-secondary" on:click={() => reset()}>
+                Reset changes
             </button>
-            <div class="loading" class:invisible={!saving}>
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
+
+            <div style="position: relative; width: 100%">
+                <button class="btn btn-lg btn-primary w-100" class:btn-danger={saveError}
+                        class:btn-primary={!saveError} disabled={saveError}
+                        on:click={saveImage}>
+                    {#if saveError}
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Error
+                    {:else}
+                        <i class="bi bi-save me-1"></i>
+                        Save
+                    {/if}
+                </button>
+                <div class="loading" class:invisible={!saving}>
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -627,11 +641,31 @@
 </div>
 
 <style>
-    .main {
-        position: relative;
+    #editor_component {
+        display: flex;
+        gap: 1rem
     }
 
-    .warnings {
+    #main {
+        position: relative;
+        flex-grow: 1
+    }
+
+    #canvasContainer {
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    #canvasContainer > #backgroundContainer,
+    #canvasContainer > canvas {
+        width: 100%;
+        height: 100%;
+    }
+
+    #warnings {
         position: absolute;
         top: 0;
         width: 100%;
@@ -640,23 +674,32 @@
         flex-direction: column;
     }
 
-    .warnings .alert:last-child {
+    #warnings .alert:last-child {
         margin-bottom: 0;
     }
 
-    #canvasContainer {
-        aspect-ratio: 1 / 1;
-        margin: 0 auto;
+    #toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem
     }
 
-    #canvasContainer canvas, :global(#backgroundCanvas canvas) {
-        width: 100%;
-        height: 100%;
+    #toolbar > #controls {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem
     }
 
-    .info {
-        font-size: 120%;
-        font-weight: bold;
+    #toolbar > #buttons_bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem
+    }
+
+    h2 {
+        font-size: larger;
+        margin-top: 0.5rem;
     }
 
     .loading {

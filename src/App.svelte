@@ -14,7 +14,11 @@
     }
 </script>
 
-<ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback}/>
+<div class="d-flex justify-center">
+    <div class="mx-auto flex-grow-1" style="max-width: 1100px">
+        <ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback}/>
+    </div>
+</div>
 
 {#if imageSources.length > 0}
     <div class="my-3">Images</div>
