@@ -271,6 +271,7 @@
             borderScaleFactor: maxDimension * 0.002,
             transparentCorners: false,
             lockScalingFlip: true,
+            hiddenTextareaContainer: canvasElement.parentElement
         })
         text.controls.mtr.offsetY = -0.0375 * maxDimension
 
