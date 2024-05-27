@@ -260,6 +260,7 @@
     }
 
     function drawText() {
+        console.log(canvas.lowerCanvasEl)
         const text = new IText('Enter text', {
             left: maxDimension / 2 - maxDimension * 0.055,
             top: maxDimension / 2 - maxDimension * 0.055,
@@ -271,7 +272,7 @@
             borderScaleFactor: maxDimension * 0.002,
             transparentCorners: false,
             lockScalingFlip: true,
-            hiddenTextareaContainer: canvasElement.parentElement
+            hiddenTextareaContainer: canvas.lowerCanvasEl
         })
         text.controls.mtr.offsetY = -0.0375 * maxDimension
 
@@ -525,6 +526,7 @@
                                      {contrast} dataURL={imageDataURL} {flipH} {flipV} {rotation}/>
             </div>
             <canvas bind:this={canvasElement}></canvas>
+            <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
         </div>
 
         {#if warnings.length > 0}
