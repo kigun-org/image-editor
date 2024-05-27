@@ -1,5 +1,5 @@
 <script>
-    import {Canvas, Circle, Group, Image as FabricImage, Line, Path, Rect} from 'fabric'
+    import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import BackgroundComponent from "./BackgroundComponent.svelte";
 
@@ -256,6 +256,28 @@
 
         canvas.add(circle)
         canvas.setActiveObject(circle)
+        canvas.renderAll()
+    }
+
+    function drawText() {
+        const text = new IText('Enter text', {
+            left: maxDimension / 2 - maxDimension * 0.055,
+            top: maxDimension / 2 - maxDimension * 0.055,
+            fontFamily: 'Arial',
+            fontSize: maxDimension * 0.07,
+            fontWeight: 'bold',
+            fill: 'yellow',
+            cornerSize: maxDimension * 0.01,
+            borderScaleFactor: maxDimension * 0.002,
+            transparentCorners: false,
+            lockScalingFlip: true,
+        })
+        text.controls.mtr.offsetY = -0.0375 * maxDimension
+
+        markers.push(text)
+
+        canvas.add(text)
+        canvas.setActiveObject(text)
         canvas.renderAll()
     }
 
@@ -603,6 +625,10 @@
 
                     <button class="btn btn-outline-secondary" on:click={drawRect}>
                         <i class="bi bi-square-fill"></i>
+                    </button>
+
+                    <button class="btn btn-outline-secondary" on:click={drawText}>
+                        <i class="bi bi-type"></i>
                     </button>
 
                     <button class="btn btn-outline-danger" disabled={!markers.includes(activeMarker)}
