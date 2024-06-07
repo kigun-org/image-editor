@@ -2,9 +2,7 @@
 <script>
     import EditorComponent from "./Editor/EditorComponent.svelte";
     import GalleryComponent from "./Editor/GalleryComponent.svelte";
-    import {createEventDispatcher, onMount} from "svelte";
-
-    const dispatch = createEventDispatcher()
+    import {onMount} from "svelte";
 
     export let imageBlob = undefined
     export let galleryURL
@@ -12,16 +10,7 @@
 
     let showBrowser = false
 
-    let validators = [
-        {
-            message: "Low resolution image. Upload the original high resolution image.",
-            test: (image) => Math.min(image.width, image.height) < 500
-        },
-        {
-            message: "Image contains text. Use the draw tool to remove any patient personal details.",
-            test: () => false
-        }
-    ]
+    export let validators = []
 
     function showBrowsePanel() {
         showBrowser = true

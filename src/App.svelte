@@ -12,11 +12,22 @@
             resolve()
         })
     }
+
+    const validators = [
+        {
+            message: "Low resolution image. Upload the original high resolution image.",
+            test: (image) => Math.min(image.width, image.height) < 500
+        },
+        {
+            message: "Image contains text. Use the draw tool to remove any patient personal details.",
+            test: () => false
+        }
+    ]
 </script>
 
 <div class="d-flex justify-center">
     <div class="mx-auto flex-grow-1" style="max-width: 1100px">
-        <ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback}/>
+        <ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback} {validators}/>
     </div>
 </div>
 
