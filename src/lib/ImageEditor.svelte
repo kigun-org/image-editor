@@ -60,8 +60,9 @@
                 await navigator.clipboard.read() : e.clipboardData.files;
 
             for (const clipboardItem of clipboardItems) {
-                if (clipboardItem.type.startsWith('image/')) {
-                    imageBlob = clipboardItem
+                const type = clipboardItem.types.find(t => t.startsWith('image/'))
+                if (type !== undefined) {
+                    imageBlob = await clipboardItem.getType(type)
                 }
             }
         })
