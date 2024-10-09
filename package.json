@@ -26,9 +26,11 @@
     "vitest": "^1.1.0"
   },
   "dependencies": {
-    "bootstrap": "^5.3.2",
+    "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.1",
-    "fabric": "^6.0.0-rc1",
-    "pixi.js": "^8.1.1"
+    "fabric": "^6.4.3",
+    "image-blob-reduce": "^4.1.0",
+    "pica": "^9.0.1",
+    "pixi.js": "^8.4.1"
   }
 }
