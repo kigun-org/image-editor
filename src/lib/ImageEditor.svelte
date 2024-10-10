@@ -1,9 +1,9 @@
 <svelte:options customElement={{tag: "image-editor", shadow: 'none'}}/>
 <script>
-    import EditorComponent from "./Editor/EditorComponent.svelte";
-    import GalleryComponent from "./Editor/GalleryComponent.svelte";
-    import canvasSize from "canvas-size";
+    import Editor from "./Editor/Editor.svelte";
+    import Gallery from "./Editor/Gallery.svelte";
     import {onMount} from "svelte";
+    import {resizeBlob} from "./utils";
 
     const MAX_IMAGE_DIMENSION = 4096
 
@@ -56,62 +56,8 @@
         loadImageBlob(ev.target.files[0])
     }
 
-    async function resizeImageBlob(blob, width, height, maxDimension) {
-        let newWidth = width
-        let newHeight = height
-        if (width > height) {
-            if (width > maxDimension) {
-                newWidth = maxDimension
-                newHeight = height * (newWidth / width)
-            }
-        } else {
-            if (height > maxDimension) {
-                newHeight = maxDimension
-                newWidth = width * (newHeight / height)
-            }
-        }
-
-        return createImageBitmap(blob, { resizeWidth: newWidth, resizeHeight: newHeight, resizeQuality: "high" })
-            .then((imageBitmap) => {
-                const offscreen = new OffscreenCanvas(imageBitmap.width, imageBitmap.height)
-                const ctx = offscreen.getContext("bitmaprenderer")
-
-                ctx.transferFromImageBitmap(imageBitmap)
-                return offscreen.convertToBlob()
-            })
-
-    }
-
-    function loadImageBlob(blob) {
-        imageBlob = blob
-        // /*
-        //  * Safari iOS doesn't support canvases larger than 4096x4096,
-        //  * so resize the image if we detect a browser which doesn't support
-        //  * the current image size.
-        //  */
-        // let originalWidth
-        // let originalHeight
-        // let maxDimension
-        // createImageBitmap(blob)
-        //     .then((imageBitmap) => {
-        //         originalWidth = imageBitmap.width
-        //         originalHeight = imageBitmap.height
-        //         maxDimension = Math.min(Math.max(imageBitmap.width, imageBitmap.height), MAX_IMAGE_DIMENSION)
-        //         return canvasSize.maxArea({max: Math.max(imageBitmap.width, imageBitmap.height)})
-        //     }).then(async ({ success, width, height }) => {
-        //         if (!success) {
-        //             console.error("Error determining canvas size.")
-        //             return
-        //         }
-        //
-        //         if (Math.max(width, height) === maxDimension) {
-        //             // no resize necessary
-        //             imageBlob = blob
-        //         } else {
-        //             // resize to maximum dimension
-        //             imageBlob = await resizeImageBlob(blob, originalWidth, originalHeight, maxDimension)
-        //         }
-        //     })
+    async function loadImageBlob(blob) {
+        imageBlob = await resizeBlob(blob, MAX_IMAGE_DIMENSION)
     }
 
     onMount(() => {
@@ -132,7 +78,7 @@
 
 <div class="upload-container" on:dragover={handleDragOver} on:drop={handleDrop} role="form">
     {#if imageBlob !== undefined}
-        <EditorComponent originalImageBlob={imageBlob} {validators} {saveCallback}/>
+        <Editor originalImageBlob={imageBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
         <div class="browse text-start p-2 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between my-2">
@@ -142,7 +88,7 @@
                 <button class="btn btn-close" on:click={() => showBrowser = false}></button>
             </div>
 
-            <GalleryComponent url={galleryURL} on:select={imageSelected}/>
+            <Gallery url={galleryURL} on:select={imageSelected}/>
         </div>
     {:else}
         <div class="instructions">

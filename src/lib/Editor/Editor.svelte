@@ -1,7 +1,7 @@
 <script>
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
-    import BackgroundComponent from "./BackgroundComponent.svelte";
+    import Background from "./Background.svelte";
     import Toolbar from "./Toolbar.svelte";
 
     export let originalImageBlob
@@ -518,7 +518,7 @@
     <div id="main">
         <div id="canvasContainer">
             <div id="backgroundContainer" style="position: absolute">
-                <BackgroundComponent bind:this={background} {brightness}
+                <Background bind:this={background} {brightness}
                                      {contrast} imageBlob={originalImageBlob} {flipH} {flipV} {rotation}/>
             </div>
             <canvas bind:this={canvasElement}></canvas>
@@ -620,11 +620,6 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem
-    }
-
-    h2 {
-        font-size: larger;
-        margin-top: 0.5rem;
     }
 
     .loading {
