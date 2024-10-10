@@ -4,6 +4,11 @@
     import GalleryComponent from "./Editor/GalleryComponent.svelte";
     import {onMount} from "svelte";
 
+    import ImageBlobReduce from "image-blob-reduce";
+    import canvasSize from "canvas-size";
+
+    const MAX_IMAGE_DIMENSION = 8192
+
     export let imageBlob = undefined
     export let galleryURL
     export let saveCallback
@@ -22,7 +27,7 @@
         fetch(event.detail.url).then((response) => {
             return response.blob()
         }).then((blob) => {
-            imageBlob = blob
+            loadImageBlob(blob)
         })
     }
 
@@ -38,19 +43,48 @@
             [...ev.dataTransfer.items].forEach((item) => {
                 // If dropped items aren't files, reject them
                 if (item.kind === "file") {
-                    imageBlob = item.getAsFile()
+                    loadImageBlob(item.getAsFile())
                 }
             })
         } else {
             // Use DataTransfer interface to access the file(s)
             [...ev.dataTransfer.files].forEach((file) => {
-                imageBlob = file
+                loadImageBlob(file)
             })
         }
     }
 
     function handleInputChange(ev) {
-        imageBlob = ev.target.files[0]
+        loadImageBlob(ev.target.files[0])
+    }
+
+    function loadImageBlob(blob) {
+        /*
+         * Safari iOS doesn't support canvases larger than 4096x4096,
+         * so resize the image if we detect a browser which doesn't support
+         * the current image size.
+         */
+        let maxDimension
+        createImageBitmap(blob)
+            .then((imageBitmap) => {
+                maxDimension = Math.min(Math.max(imageBitmap.width, imageBitmap.height), MAX_IMAGE_DIMENSION)
+                return canvasSize.maxArea({max: Math.max(imageBitmap.width, imageBitmap.height)})
+            }).then(({ success, width, height }) => {
+                if (!success) {
+                    console.error("Error determining canvas size.")
+                    return
+                }
+
+                if (Math.max(width, height) === maxDimension) {
+                    // no resize necessary
+                    imageBlob = blob
+                } else {
+                    // resize to the supported canvas size
+                    new ImageBlobReduce()
+                        .toBlob(blob, {max: maxDimension})
+                        .then(resampledBlob => imageBlob = resampledBlob)
+                }
+            })
     }
 
     onMount(() => {
@@ -62,7 +96,7 @@
             for (const clipboardItem of clipboardItems) {
                 const type = clipboardItem.types.find(t => t.startsWith('image/'))
                 if (type !== undefined) {
-                    imageBlob = await clipboardItem.getType(type)
+                    loadImageBlob(await clipboardItem.getType(type))
                 }
             }
         })
@@ -71,7 +105,7 @@
 
 <div class="upload-container" on:dragover={handleDragOver} on:drop={handleDrop} role="form">
     {#if imageBlob !== undefined}
-        <EditorComponent originalImageBlob={imageBlob} {validators} {saveCallback} />
+        <EditorComponent originalImageBlob={imageBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
         <div class="browse text-start p-2 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between my-2">

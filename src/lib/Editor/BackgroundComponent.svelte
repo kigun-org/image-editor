@@ -2,7 +2,7 @@
     import {Application, Assets, ColorMatrixFilter, Sprite} from "pixi.js"
     import {onMount} from "svelte"
 
-    export let dataURL
+    export let imageBlob
 
     let canvasContainer
 
@@ -66,7 +66,10 @@
     }
 
     onMount(async () => {
-        const texture = await Assets.load({src: dataURL, loadParser: 'loadTextures'})
+        const texture = await Assets.load({
+            src: URL.createObjectURL(imageBlob),
+            loadParser: 'loadTextures'}
+        )
         const maxDimension = Math.max(texture.width, texture.height)
 
         await app.init({

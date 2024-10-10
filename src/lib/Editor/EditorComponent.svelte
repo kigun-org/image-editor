@@ -4,7 +4,6 @@
     import BackgroundComponent from "./BackgroundComponent.svelte";
 
     export let originalImageBlob
-    const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
 
     export let validators
     let warnings = []
@@ -38,6 +37,26 @@
     let markers = []
     let activeMarker
 
+    function validate(originalImageBlob, validators) {
+        const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
+        const testImage = new Image()
+
+        testImage.onload = () => {
+            warnings = []
+            for (const validator of validators) {
+                if (validator.test(testImage)) {
+                    warnings = [...warnings, validator.message]
+                }
+            }
+        }
+
+        testImage.src = imageDataURL
+    }
+
+    function hideWarning(ev) {
+        ev.target.parentElement.classList.add("d-none")
+    }
+
     function handleRotationStart() {
         crop.grid.visible = true
         canvas.renderAll()
@@ -48,9 +67,8 @@
         canvas.renderAll()
     }
 
-    $: adjustRotation(rotation)
-
-    function adjustRotation(newValue) {
+    $: updateRotation(rotation)
+    function updateRotation(newValue) {
         if (canvas !== undefined) {
             if (newValue > 180) {
                 rotation = -180 + newValue % 180
@@ -80,25 +98,6 @@
             crop.rect.setControlsVisibility({mt: !newValue, mr: !newValue, mb: !newValue, ml: !newValue})
             canvas.renderAll()
         }
-    }
-
-    function validate(imageDataURL, validators) {
-        const testImage = new Image()
-
-        testImage.onload = () => {
-            warnings = []
-            for (const validator of validators) {
-                if (validator.test(testImage)) {
-                    warnings = [...warnings, validator.message]
-                }
-            }
-        }
-
-        testImage.src = imageDataURL
-    }
-
-    function hideWarning(ev) {
-        ev.target.parentElement.classList.add("d-none")
     }
 
     function createCropRect(image) {
@@ -165,8 +164,8 @@
     }
 
     function initCrop() {
-        crop.rect = createCropRect(imagePlaceholder)
         crop.background = createCropBackground(canvas)
+        crop.rect = createCropRect(imagePlaceholder)
         crop.grid = createGrid(imagePlaceholder)
 
         canvas.add(crop.background)
@@ -332,7 +331,7 @@
         flipH = false
         flipV = false
         rotation = 0
-        adjustRotation(0)
+        updateRotation(0)
         resetCrop()
 
         brightness = 1
@@ -341,6 +340,8 @@
         for (const marker of markers) {
             canvas.remove(marker)
         }
+
+        canvas.setActiveObject(crop.rect)
     }
 
     function saveImage() {
@@ -366,8 +367,8 @@
         canvas.toCanvasElement(1, {
             left: x_min,
             top: y_min,
-            width: x_max - x_min - 1,
-            height: y_max - y_min - 1
+            width: x_max - x_min,
+            height: y_max - y_min
         }).toBlob((blob) => {
             saveCallback(blob).then(() => {
                 saving = false
@@ -377,153 +378,152 @@
             })
             canvas.backgroundImage = undefined
             canvas.backgroundColor = undefined
-        })
+        }, "image/jpeg", 1.0)
     }
 
-    onMount(() => {
+    onMount(async () => {
         canvas = new Canvas(canvasElement, {
             backgroundColor: "rgba(0,0,0,0)",
             preserveObjectStacking: true,
             selection: false
         })
 
-        validate(imageDataURL, validators)
+        validate(originalImageBlob, validators)
 
-        FabricImage.fromURL(imageDataURL).then((img) => {
-            imagePlaceholder = new Rect({
-                left: img.left, top: img.top, width: img.width, height: img.height,
-                fill: 'transparent'
-            })
+        const imageBitmap = await createImageBitmap(originalImageBlob)
+        maxDimension = Math.max(imageBitmap.width, imageBitmap.height)
 
-            maxDimension = Math.max(imagePlaceholder.width, imagePlaceholder.height)
+        imagePlaceholder = new Rect({
+            width: imageBitmap.width, height: imageBitmap.height,
+            fill: 'transparent'
+        })
 
-            canvas.setDimensions({width: maxDimension, height: maxDimension}, {backstoreOnly: true})
-            canvas.setDimensions({width: "100%", height: "100%"}, {cssOnly: true})
+        canvas.setDimensions({width: maxDimension, height: maxDimension}, {backstoreOnly: true})
+        canvas.setDimensions({width: "100%", height: "100%"}, {cssOnly: true})
 
-            imagePlaceholder.selectable = false
+        imagePlaceholder.selectable = false
 
-            canvas.add(imagePlaceholder)
-            canvas.centerObject(imagePlaceholder)
+        canvas.add(imagePlaceholder)
+        canvas.centerObject(imagePlaceholder)
 
-            initCrop()
+        initCrop()
 
-            canvas.setActiveObject(crop.rect)
-            canvas.renderAll()
+        canvas.setActiveObject(crop.rect)
+        canvas.renderAll()
 
-            /*
-             * Handle canvas events
-             */
+        /*
+         * Handle canvas events
+         */
 
-            // Limit crop rectangle position to not exceed image boundaries
-            canvas.on("object:moving", (e) => {
-                const obj = e.target
-                if (obj === crop.rect) {
-                    obj.setCoords()
+        // Limit crop rectangle position to not exceed image boundaries
+        canvas.on("object:moving", (e) => {
+            const obj = e.target
+            if (obj === crop.rect) {
+                obj.setCoords()
 
-                    // top-left corner
-                    if (obj.getBoundingRect().top < 0) {
-                        obj.top = obj.lastGoodTop
-                    }
+                // top-left corner
+                if (obj.getBoundingRect().top < 0) {
+                    obj.top = obj.lastGoodTop
+                }
 
-                    if (obj.getBoundingRect().left < 0) {
+                if (obj.getBoundingRect().left < 0) {
+                    obj.left = obj.lastGoodLeft
+                }
+
+                // bottom-right corner
+                if (obj.getBoundingRect().top + obj.getBoundingRect().height > canvas.height) {
+                    obj.top = obj.lastGoodTop
+                }
+
+                if (obj.getBoundingRect().left + obj.getBoundingRect().width > canvas.width) {
+                    obj.left = obj.lastGoodLeft
+                }
+
+                obj.lastGoodTop = obj.top
+                obj.lastGoodLeft = obj.left
+
+                obj.setCoords()
+                updateCrop()
+            }
+        })
+
+        // Limit crop rectangle scale to not exceed image boundaries
+        canvas.on('object:scaling', (e) => {
+            const obj = e.target
+            if (obj === crop.rect) {
+                obj.setCoords()
+
+                const cropRect_bb = obj.getBoundingRect()
+
+                if (cropRect_bb.top < 0
+                    || cropRect_bb.top + cropRect_bb.height > canvas.height) {
+                    if (obj.scaleY > obj.lastGoodScale) {
                         obj.left = obj.lastGoodLeft
-                    }
-
-                    // bot-right corner
-                    if (obj.getBoundingRect().top + obj.getBoundingRect().height > canvas.height) {
                         obj.top = obj.lastGoodTop
+                        obj.scaleX = obj.lastGoodScale
+                        obj.scaleY = obj.lastGoodScale
                     }
+                }
 
-                    if (obj.getBoundingRect().left + obj.getBoundingRect().width > canvas.width) {
+                if (cropRect_bb.left < 0
+                    || cropRect_bb.left + cropRect_bb.width > canvas.width) {
+                    if (obj.scaleY > obj.lastGoodScale) {
                         obj.left = obj.lastGoodLeft
+                        obj.top = obj.lastGoodTop
+                        obj.scaleX = obj.lastGoodScale
+                        obj.scaleY = obj.lastGoodScale
                     }
-
-                    obj.lastGoodTop = obj.top
-                    obj.lastGoodLeft = obj.left
-
-                    obj.setCoords()
-                    updateCrop()
-                }
-            })
-
-            // Limit crop rectangle scale to not exceed image boundaries
-            canvas.on('object:scaling', (e) => {
-                const obj = e.target
-                if (obj === crop.rect) {
-                    obj.setCoords()
-
-                    const cropRect_bb = obj.getBoundingRect()
-
-                    if (cropRect_bb.top < 0
-                        || cropRect_bb.top + cropRect_bb.height > canvas.height) {
-                        if (obj.scaleY > obj.lastGoodScale) {
-                            obj.left = obj.lastGoodLeft
-                            obj.top = obj.lastGoodTop
-                            obj.scaleX = obj.lastGoodScale
-                            obj.scaleY = obj.lastGoodScale
-                        }
-                    }
-
-                    if (cropRect_bb.left < 0
-                        || cropRect_bb.left + cropRect_bb.width > canvas.width) {
-                        if (obj.scaleY > obj.lastGoodScale) {
-                            obj.left = obj.lastGoodLeft
-                            obj.top = obj.lastGoodTop
-                            obj.scaleX = obj.lastGoodScale
-                            obj.scaleY = obj.lastGoodScale
-                        }
-                    }
-
-                    obj.lastGoodTop = obj.top
-                    obj.lastGoodLeft = obj.left
-                    obj.lastGoodScale = obj.scaleX
-
-                    obj.setCoords()
-                    updateCrop()
-                }
-            })
-
-            // Select crop rectangle when clicking on the background
-            crop.background.on("mousedown", function handleDarkRectClick(e) {
-                if (e.target === crop.background) {
-                    canvas.setActiveObject(crop.rect)
-                    canvas.renderAll()
-                }
-            })
-
-            /**
-             * On selection change, set `activeMarker`
-             * to new selected marker or undefined.
-             *
-             * @param e
-             */
-            function onSelectionUpdated(e) {
-                if (e.selected === undefined) {
-                    activeMarker = undefined
-                    return
                 }
 
-                const obj = e.selected[0]
-                if (markers.includes(obj)) {
-                    activeMarker = obj
-                } else {
-                    activeMarker = undefined
-                }
+                obj.lastGoodTop = obj.top
+                obj.lastGoodLeft = obj.left
+                obj.lastGoodScale = obj.scaleX
+
+                obj.setCoords()
+                updateCrop()
+            }
+        })
+
+        // Select crop rectangle when clicking on the background
+        crop.background.on("mousedown", function handleDarkRectClick(e) {
+            if (e.target === crop.background) {
+                canvas.setActiveObject(crop.rect)
+                canvas.renderAll()
+            }
+        })
+
+        /**
+         * On selection change, set `activeMarker`
+         * to new selected marker or undefined.
+         *
+         * @param e
+         */
+        function onSelectionUpdated(e) {
+            if (e.selected === undefined) {
+                activeMarker = undefined
+                return
             }
 
-            canvas.on("selection:created", onSelectionUpdated)
-            canvas.on("selection:updated", onSelectionUpdated)
-            canvas.on("selection:cleared", onSelectionUpdated)
-        })
+            const obj = e.selected[0]
+            if (markers.includes(obj)) {
+                activeMarker = obj
+            } else {
+                activeMarker = undefined
+            }
+        }
+
+        canvas.on("selection:created", onSelectionUpdated)
+        canvas.on("selection:updated", onSelectionUpdated)
+        canvas.on("selection:cleared", onSelectionUpdated)
     })
 </script>
 
 <div id="editor_component">
     <div id="main">
-        <div id="canvasContainer" style="position: relative">
+        <div id="canvasContainer">
             <div id="backgroundContainer" style="position: absolute">
                 <BackgroundComponent bind:this={background} {brightness}
-                                     {contrast} dataURL={imageDataURL} {flipH} {flipV} {rotation}/>
+                                     {contrast} imageBlob={originalImageBlob} {flipH} {flipV} {rotation}/>
             </div>
             <canvas bind:this={canvasElement}></canvas>
             <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
@@ -548,7 +548,7 @@
                     Orientation
                 </h2>
                 <div>
-                    <div>
+                    <div class="d-flex justify-content-center gap-1">
                         <button class="btn btn-outline-secondary" class:active={flipH} on:click={() => flipH = !flipH}
                                 type="button">
                             <i class="bi bi-symmetry-vertical"></i>
@@ -617,7 +617,7 @@
                 <h2>
                     Markers
                 </h2>
-                <div>
+                <div class="d-flex flex-wrap justify-content-center gap-1">
                     <button class="btn btn-outline-secondary" on:click={drawArrow}>
                         <i class="bi bi-arrow-right"></i>
                     </button>
@@ -681,6 +681,7 @@
     }
 
     #canvasContainer {
+        position: relative;
         aspect-ratio: 1 / 1;
         display: flex;
         align-items: center;
