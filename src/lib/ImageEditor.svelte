@@ -2,12 +2,10 @@
 <script>
     import EditorComponent from "./Editor/EditorComponent.svelte";
     import GalleryComponent from "./Editor/GalleryComponent.svelte";
+    import canvasSize from "canvas-size";
     import {onMount} from "svelte";
 
-    import ImageBlobReduce from "image-blob-reduce";
-    import canvasSize from "canvas-size";
-
-    const MAX_IMAGE_DIMENSION = 8192
+    const MAX_IMAGE_DIMENSION = 4096
 
     export let imageBlob = undefined
     export let galleryURL
@@ -58,33 +56,62 @@
         loadImageBlob(ev.target.files[0])
     }
 
-    function loadImageBlob(blob) {
-        /*
-         * Safari iOS doesn't support canvases larger than 4096x4096,
-         * so resize the image if we detect a browser which doesn't support
-         * the current image size.
-         */
-        let maxDimension
-        createImageBitmap(blob)
-            .then((imageBitmap) => {
-                maxDimension = Math.min(Math.max(imageBitmap.width, imageBitmap.height), MAX_IMAGE_DIMENSION)
-                return canvasSize.maxArea({max: Math.max(imageBitmap.width, imageBitmap.height)})
-            }).then(({ success, width, height }) => {
-                if (!success) {
-                    console.error("Error determining canvas size.")
-                    return
-                }
+    async function resizeImageBlob(blob, width, height, maxDimension) {
+        let newWidth = width
+        let newHeight = height
+        if (width > height) {
+            if (width > maxDimension) {
+                newWidth = maxDimension
+                newHeight = height * (newWidth / width)
+            }
+        } else {
+            if (height > maxDimension) {
+                newHeight = maxDimension
+                newWidth = width * (newHeight / height)
+            }
+        }
 
-                if (Math.max(width, height) === maxDimension) {
-                    // no resize necessary
-                    imageBlob = blob
-                } else {
-                    // resize to the supported canvas size
-                    new ImageBlobReduce()
-                        .toBlob(blob, {max: maxDimension})
-                        .then(resampledBlob => imageBlob = resampledBlob)
-                }
+        return createImageBitmap(blob, { resizeWidth: newWidth, resizeHeight: newHeight, resizeQuality: "high" })
+            .then((imageBitmap) => {
+                const offscreen = new OffscreenCanvas(imageBitmap.width, imageBitmap.height)
+                const ctx = offscreen.getContext("bitmaprenderer")
+
+                ctx.transferFromImageBitmap(imageBitmap)
+                return offscreen.convertToBlob()
             })
+
+    }
+
+    function loadImageBlob(blob) {
+        imageBlob = blob
+        // /*
+        //  * Safari iOS doesn't support canvases larger than 4096x4096,
+        //  * so resize the image if we detect a browser which doesn't support
+        //  * the current image size.
+        //  */
+        // let originalWidth
+        // let originalHeight
+        // let maxDimension
+        // createImageBitmap(blob)
+        //     .then((imageBitmap) => {
+        //         originalWidth = imageBitmap.width
+        //         originalHeight = imageBitmap.height
+        //         maxDimension = Math.min(Math.max(imageBitmap.width, imageBitmap.height), MAX_IMAGE_DIMENSION)
+        //         return canvasSize.maxArea({max: Math.max(imageBitmap.width, imageBitmap.height)})
+        //     }).then(async ({ success, width, height }) => {
+        //         if (!success) {
+        //             console.error("Error determining canvas size.")
+        //             return
+        //         }
+        //
+        //         if (Math.max(width, height) === maxDimension) {
+        //             // no resize necessary
+        //             imageBlob = blob
+        //         } else {
+        //             // resize to maximum dimension
+        //             imageBlob = await resizeImageBlob(blob, originalWidth, originalHeight, maxDimension)
+        //         }
+        //     })
     }
 
     onMount(() => {

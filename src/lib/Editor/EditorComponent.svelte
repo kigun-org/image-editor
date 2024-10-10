@@ -2,6 +2,7 @@
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import BackgroundComponent from "./BackgroundComponent.svelte";
+    import Toolbar from "./Toolbar.svelte";
 
     export let originalImageBlob
 
@@ -259,7 +260,6 @@
     }
 
     function drawText() {
-        console.log(canvas.lowerCanvasEl)
         const text = new IText('Enter text', {
             left: maxDimension / 2 - maxDimension * 0.055,
             top: maxDimension / 2 - maxDimension * 0.055,
@@ -360,10 +360,6 @@
         canvas.centerObject(canvas.backgroundImage)
         canvas.backgroundColor = 'dimgray'
 
-        /*
-         * Output PNG (lossless) to upload to server
-         * Could add ("image/webp", 1) arguments, but not supported by Safari
-         */
         canvas.toCanvasElement(1, {
             left: x_min,
             top: y_min,
@@ -542,105 +538,11 @@
     </div>
 
     <div id="toolbar">
-        <div id="controls">
-            <div>
-                <h2>
-                    Orientation
-                </h2>
-                <div>
-                    <div class="d-flex justify-content-center gap-1">
-                        <button class="btn btn-outline-secondary" class:active={flipH} on:click={() => flipH = !flipH}
-                                type="button">
-                            <i class="bi bi-symmetry-vertical"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" class:active={flipV} on:click={() => flipV = !flipV}
-                                type="button">
-                            <i class="bi bi-symmetry-horizontal"></i>
-                        </button>
-
-                        <button class="btn btn-outline-secondary" on:click={() => rotation = rotation + 90}>
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-
-                        <button class="btn btn-outline-secondary" on:click={() => rotation = rotation - 90}>
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </button>
-                    </div>
-
-                    <div class="m-2">
-                        Rotation ({rotation}&deg;)
-                        <br>
-                        <input bind:value={rotation} max="180" min="-180"
-                               on:pointerdown={handleRotationStart} on:pointerup={handleRotationEnd} step="1"
-                               type="range">
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h2 class:bg-warning={crop.warning} class:text-warning-emphasis={crop.warning}>
-                    Crop
-                    {#if crop.warning}
-                        <i class="bi bi-exclamation-triangle mx-1"
-                           title="Crop area extends beyond image"></i>
-                    {/if}
-                </h2>
-                <div>
-                    <label>
-                        <input bind:checked={keepAspectRatio} type="checkbox">
-                        Keep aspect ratio
-                    </label>
-                </div>
-            </div>
-
-            <div>
-                <h2>
-                    Adjust image
-                </h2>
-                <div class="mx-2">
-                    <i class="bi bi-brightness-high"></i>
-                    Brightness
-                    <small>({Math.round((brightness - 1) * 100)}%)</small>
-                    <br>
-                    <input bind:value={brightness} max="1.25" min="0.75" step="0.01" type="range">
-                </div>
-                <div class="mx-2">
-                    <i class="bi bi-circle-half"></i>
-                    Contrast
-                    <small>({Math.round(contrast * 100)}%)</small>
-                    <br>
-                    <input bind:value={contrast} max="0.25" min="-0.25" step="0.01" type="range">
-                </div>
-            </div>
-
-            <div>
-                <h2>
-                    Markers
-                </h2>
-                <div class="d-flex flex-wrap justify-content-center gap-1">
-                    <button class="btn btn-outline-secondary" on:click={drawArrow}>
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-
-                    <button class="btn btn-outline-secondary" on:click={drawCircle}>
-                        <i class="bi bi-circle"></i>
-                    </button>
-
-                    <button class="btn btn-outline-secondary" on:click={drawRect}>
-                        <i class="bi bi-square-fill"></i>
-                    </button>
-
-                    <button class="btn btn-outline-secondary" on:click={drawText}>
-                        <i class="bi bi-type"></i>
-                    </button>
-
-                    <button class="btn btn-outline-danger" disabled={!markers.includes(activeMarker)}
-                            on:click={deleteSelectedMarker}>
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <Toolbar bind:flipH bind:flipV bind:brightness bind:contrast
+                 bind:rotation on:rotationStart={handleRotationStart} on:rotationEnd={handleRotationEnd}
+                 bind:keepAspectRatio cropWarning={crop.warning}
+                 on:drawArrow={drawArrow} on:drawCircle={drawCircle} on:drawRect={drawRect} on:drawText={drawText}
+                 bind:markers bind:activeMarker on:deleteMarker={deleteSelectedMarker} />
 
         <div id="buttons_bottom">
             <button class="btn btn-outline-secondary" on:click={() => reset()}>
@@ -712,13 +614,6 @@
         display: flex;
         flex-direction: column;
         gap: 2rem
-    }
-
-    #toolbar > #controls {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem
     }
 
     #toolbar > #buttons_bottom {
