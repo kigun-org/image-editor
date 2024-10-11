@@ -111,8 +111,9 @@
             strokeWidth: 0,
             minScaleLimit: 0.2,
             lockScalingFlip: true,
-            cornerSize: maxDimension * 0.015,
-            borderScaleFactor: maxDimension * 0.002,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
         })
         rect.setControlsVisibility({
@@ -215,8 +216,9 @@
             left: maxDimension / 2 - 4 * unit,
             inverted: true,
             fill: 'yellow',
-            cornerSize: maxDimension * 0.01,
-            borderScaleFactor: maxDimension * 0.002,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
             lockScalingFlip: true,
             minScaleLimit: 0.5,
@@ -242,8 +244,9 @@
             strokeWidth: maxDimension * 0.01,
             stroke: 'yellow',
             fill: 'transparent',
-            cornerSize: maxDimension * 0.01,
-            borderScaleFactor: maxDimension * 0.002,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
             lockScalingFlip: true,
             minScaleLimit: 0.5
@@ -267,8 +270,9 @@
             fontSize: maxDimension * 0.07,
             fontWeight: 'bold',
             fill: 'yellow',
-            cornerSize: maxDimension * 0.01,
-            borderScaleFactor: maxDimension * 0.002,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
             lockScalingFlip: true,
             hiddenTextareaContainer: canvas.lowerCanvasEl
@@ -289,8 +293,9 @@
             width: maxDimension * 0.16,
             height: maxDimension * 0.08,
             fill: 'dimgray',
-            cornerSize: maxDimension * 0.01,
-            borderScaleFactor: maxDimension * 0.002,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
             lockScalingFlip: true,
             minScaleLimit: 0.5
@@ -330,9 +335,12 @@
     function reset() {
         flipH = false
         flipV = false
+
         rotation = 0
         updateRotation(0)
+
         resetCrop()
+        keepAspectRatio = true
 
         brightness = 1
         contrast = 0
@@ -375,13 +383,16 @@
             canvas.backgroundImage = undefined
             canvas.backgroundColor = undefined
         }, "image/jpeg", 1.0)
+
+        canvas.setActiveObject(crop.rect)
     }
 
     onMount(async () => {
         canvas = new Canvas(canvasElement, {
             backgroundColor: "rgba(0,0,0,0)",
             preserveObjectStacking: true,
-            selection: false
+            selection: false,
+            enableRetinaScaling: false
         })
 
         validate(originalImageBlob, validators)

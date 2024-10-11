@@ -1,20 +1,6 @@
 import canvasSize from "canvas-size";
 
-async function resizeImageBlob(blob, width, height, maxDimension) {
-    let newWidth = width
-    let newHeight = height
-    if (width > height) {
-        if (width > maxDimension) {
-            newWidth = maxDimension
-            newHeight = height * (newWidth / width)
-        }
-    } else {
-        if (height > maxDimension) {
-            newHeight = maxDimension
-            newWidth = width * (newHeight / height)
-        }
-    }
-
+async function resizeImageBlob(blob, newWidth, newHeight) {
     return createImageBitmap(blob, { resizeWidth: newWidth, resizeHeight: newHeight, resizeQuality: "high" })
         .then((imageBitmap) => {
             const offscreen = new OffscreenCanvas(imageBitmap.width, imageBitmap.height)
@@ -23,7 +9,6 @@ async function resizeImageBlob(blob, width, height, maxDimension) {
             ctx.transferFromImageBitmap(imageBitmap)
             return offscreen.convertToBlob()
         })
-
 }
 
 export function resizeBlob(blob, limit: number = undefined) {
@@ -46,7 +31,10 @@ export function resizeBlob(blob, limit: number = undefined) {
                 maxDimension = Math.min(maxDimension, limit)
             }
 
-            return canvasSize.maxArea({max: Math.max(imageBitmap.width, imageBitmap.height)})
+            // if blob is too big, set the next step to a power of two
+            // (mostly for Safari iOS, which only supports 4096x4096 pixels).
+            const pow2Dimension = Math.pow(2, Math.floor( Math.log2(maxDimension) ))
+            return canvasSize.maxArea({max: maxDimension, step: maxDimension - pow2Dimension})
         }) // @ts-ignore
         .then(async ({ success, width, height }) => {
             if (!success) {
@@ -54,12 +42,26 @@ export function resizeBlob(blob, limit: number = undefined) {
                 return
             }
 
-            if (Math.max(width, height) === maxDimension) {
+            if (Math.max(width, height) === Math.max(originalWidth, originalHeight)) {
                 // no resize necessary
                 return blob
             } else {
                 // resize to maximum dimension
-                return await resizeImageBlob(blob, originalWidth, originalHeight, maxDimension)
+                let newWidth = originalWidth
+                let newHeight = originalHeight
+                if (originalWidth > originalHeight) {
+                    if (originalWidth > width) {
+                        newWidth = width
+                        newHeight = originalHeight * (newWidth / originalWidth)
+                    }
+                } else {
+                    if (originalHeight > height) {
+                        newHeight = height
+                        newWidth = originalWidth * (newHeight / originalHeight)
+                    }
+                }
+
+                return await resizeImageBlob(blob, newWidth, newHeight)
             }
         })
 }
