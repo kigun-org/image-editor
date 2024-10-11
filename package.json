@@ -1,7 +1,7 @@
 {
   "name": "image-editor",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,23 +13,21 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.1",
-    "@sveltejs/vite-plugin-svelte": "^2.4.2",
-    "@testing-library/jest-dom": "^6.1.6",
-    "@testing-library/svelte": "^4.0.5",
-    "@types/node": "^20.11.3",
-    "@vitest/coverage-v8": "^1.1.0",
-    "@vitest/ui": "^1.1.0",
-    "jsdom": "^23.0.1",
-    "svelte": "^4.0.5",
-    "vite": "^4.4.5",
-    "vitest": "^1.1.0"
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/svelte": "^5.2.1",
+    "@vitest/coverage-v8": "^2.1.1",
+    "@vitest/ui": "^2.1.1",
+    "jsdom": "^25.0.0",
+    "svelte": "^4.2.19",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.1"
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
-    "bootstrap-icons": "^1.11.1",
+    "bootstrap-icons": "^1.11.3",
     "canvas-size": "^2.0.0",
     "fabric": "^6.4.3",
-    "pixi.js": "^8.4.1"
+    "pixi.js": "^8.5.0"
   }
 }
