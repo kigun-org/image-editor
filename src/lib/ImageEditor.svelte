@@ -1,15 +1,17 @@
 <svelte:options customElement={{tag: "image-editor", shadow: 'none'}}/>
-<script>
+<script lang="ts">
     import Editor from "./Editor/Editor.svelte";
     import Gallery from "./Editor/Gallery.svelte";
     import {onMount} from "svelte";
     import {resizeBlob} from "./utils";
 
-    const MAX_IMAGE_DIMENSION = 4096
+    const MAX_IMAGE_DIMENSION = 8192
 
     export let imageBlob = undefined
     export let galleryURL
     export let saveCallback
+
+    let editorBlob = undefined
 
     let showBrowser = false
 
@@ -57,28 +59,34 @@
     }
 
     async function loadImageBlob(blob) {
-        imageBlob = await resizeBlob(blob, MAX_IMAGE_DIMENSION)
+        editorBlob = await resizeBlob(blob, MAX_IMAGE_DIMENSION)
     }
 
     onMount(() => {
-        document.addEventListener('paste', async (e) => {
-            e.preventDefault()
-            const clipboardItems = typeof navigator?.clipboard?.read === 'function' ?
-                await navigator.clipboard.read() : e.clipboardData.files;
+        if (imageBlob !== undefined) {
+            // if an imageBlob is provided, load that
+            loadImageBlob(imageBlob)
+        } else {
+            // otherwise, add a paste event listener
+            document.addEventListener('paste', async (e) => {
+                e.preventDefault()
+                const clipboardItems = typeof navigator?.clipboard?.read === 'function' ?
+                    await navigator.clipboard.read() : e.clipboardData.files;
 
-            for (const clipboardItem of clipboardItems) {
-                const type = clipboardItem.types.find(t => t.startsWith('image/'))
-                if (type !== undefined) {
-                    loadImageBlob(await clipboardItem.getType(type))
+                for (const clipboardItem of clipboardItems) {
+                    const type = clipboardItem.types.find(t => t.startsWith('image/'))
+                    if (type !== undefined) {
+                        loadImageBlob(await clipboardItem.getType(type))
+                    }
                 }
-            }
-        })
+            })
+        }
     })
 </script>
 
 <div class="upload-container" on:dragover={handleDragOver} on:drop={handleDrop} role="form">
-    {#if imageBlob !== undefined}
-        <Editor originalImageBlob={imageBlob} {validators} {saveCallback}/>
+    {#if editorBlob !== undefined}
+        <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
         <div class="browse text-start p-2 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between my-2">

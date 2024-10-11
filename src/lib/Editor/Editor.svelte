@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import Background from "./Background.svelte";

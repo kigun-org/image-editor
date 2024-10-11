@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import {Application, Assets, ColorMatrixFilter, Sprite} from "pixi.js"
     import {onMount} from "svelte"
 
