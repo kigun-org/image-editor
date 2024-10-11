@@ -33,7 +33,7 @@
                     <div class="fs-5">{section.title}</div>
                     <div class="d-flex flex-wrap gap-1">
                         {#each section.images as image}
-                            <div class="thumb_image" on:click={selectImage(image)}>
+                            <div class="thumb_image" on:click={() => selectImage(image)}>
                                 <img src={image.thumbnail} alt={image.id}>
                             </div>
                         {/each}
