@@ -1,18 +1,19 @@
 <script lang="ts">
+    import "./app.css";
     import 'bootstrap-icons/font/bootstrap-icons.css'
     import 'bootstrap/dist/css/bootstrap.css'
-
+    
     import ImageEditor from "./lib/ImageEditor.svelte";
-
+    
     let imageSources = $state([])
-
+    
     function downloadCallback(blob) {
         return new Promise((resolve) => {
             imageSources = [...imageSources, URL.createObjectURL(blob)]
             resolve()
         })
     }
-
+    
     const validators = [
         {
             message: "Low resolution image. Upload the original high resolution image.",
