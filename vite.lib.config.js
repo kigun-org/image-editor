@@ -6,18 +6,9 @@ import {svelte} from '@sveltejs/vite-plugin-svelte'
 export default defineConfig({
     base: '/static/image-editor/',
     publicDir: false,
-    plugins: [svelte({
-            compilerOptions: {
-                customElement: true
-            }
-        }
-    )],
+    plugins: [svelte()],
     build: {
         rollupOptions: {
-            external: [
-                'bootstrap',
-                'bootstrap-icons'
-            ],
             output: {
                 manualChunks: (_) => "common"
             }

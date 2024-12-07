@@ -1,5 +1,6 @@
-<svelte:options customElement={{tag: "image-editor", shadow: 'none'}}/>
 <script lang="ts">
+    import "./tailwind.css";
+
     import Editor from "./Editor/Editor.svelte";
     import Gallery from "./Editor/Gallery.svelte";
     import {onMount} from "svelte";

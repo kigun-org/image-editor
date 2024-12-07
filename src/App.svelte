@@ -1,5 +1,4 @@
 <script lang="ts">
-    import "./app.css";
     import 'bootstrap-icons/font/bootstrap-icons.css'
     import 'bootstrap/dist/css/bootstrap.css'
     
@@ -8,7 +7,8 @@
     let imageSources = $state([])
     
     function downloadCallback(blob) {
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
+            await new Promise(r => setTimeout(r, 1000))
             imageSources = [...imageSources, URL.createObjectURL(blob)]
             resolve()
         })

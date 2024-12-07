@@ -529,74 +529,74 @@
     });
 </script>
 
-<div id="editor_component">
-    <div id="main">
-        <div id="canvasContainer">
-            <div id="backgroundContainer" style="position: absolute">
-                <Background bind:this={background} {brightness}
-                                     {contrast} imageBlob={originalImageBlob} {flipH} {flipV} {rotation}/>
+<div class="k-flex k-gap-3 k-flex-col md:k-flex-row">
+    <div class="k-flex-auto k-aspect-square k-bg-amber-100 k-relative">
+        <div id="main">
+            <div id="canvasContainer">
+                <div id="backgroundContainer" style="position: absolute">
+                    <Background bind:this={background} {brightness}
+                                {contrast} imageBlob={originalImageBlob} {flipH} {flipV} {rotation}/>
+                </div>
+                <canvas bind:this={canvasElement}></canvas>
+                <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
             </div>
-            <canvas bind:this={canvasElement}></canvas>
-            <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
+
+            {#if warnings.length > 0}
+                <div id="warnings">
+                    {#each warnings as warning}
+                        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                            {warning}
+                            <button class="btn-close m-0" onclick={hideWarning}></button>
+                        </div>
+                    {/each}
+                </div>
+            {/if}
         </div>
-
-        {#if warnings.length > 0}
-            <div id="warnings">
-                {#each warnings as warning}
-                    <div class="alert alert-warning d-flex justify-content-between align-items-center">
-                        {warning}
-                        <button class="btn-close m-0" onclick={hideWarning}></button>
-                    </div>
-                {/each}
-            </div>
-        {/if}
     </div>
-
-    <div id="toolbar">
+    <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
         <Toolbar bind:flipH bind:flipV bind:brightness bind:contrast
                  bind:rotation on:rotationStart={handleRotationStart} on:rotationEnd={handleRotationEnd}
                  bind:keepAspectRatio cropWarning={crop.warning}
                  on:drawArrow={drawArrow} on:drawCircle={drawCircle} on:drawRect={drawRect} on:drawText={drawText}
                  bind:markers bind:activeMarker on:deleteMarker={deleteSelectedMarker} />
 
-        <div id="buttons_bottom">
-            <button class="btn btn-outline-secondary" onclick={() => reset()}>
+        <div class="k-flex k-flex-col k-gap-2">
+            <button class="k-btn k-w-full" onclick={() => reset()}>
                 Reset changes
             </button>
 
-            <div style="position: relative; width: 100%">
-                <button class="btn btn-lg btn-primary w-100" class:btn-danger={saveError}
-                        class:btn-primary={!saveError} disabled={saveError}
-                        onclick={saveImage}>
-                    {#if saveError}
-                        <i class="bi bi-exclamation-triangle me-1"></i>
-                        Error
-                    {:else}
-                        <i class="bi bi-save me-1"></i>
-                        Save
-                    {/if}
-                </button>
-                <div class="loading" class:invisible={!saving}>
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
+            <button class="k-btn k-w-full" class:k-btn-primary={!saveError}
+                    class:k-btn-danger={saveError} disabled={saveError || saving}
+                    onclick={saveImage}>
+                {#if saveError}
+                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                        <path d="M12 9v4"/>
+                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                    Error
+                {:else if saving}
+                    <span class="k-loading k-loading-spinner"></span>
+                    Saving
+                {:else}
+                    <svg
+                         fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                        <path d="M5 12l5 5l10 -10"/>
+                    </svg>
+                    Save
+                {/if}
+            </button>
         </div>
     </div>
 </div>
 
 <style>
-    #editor_component {
-        display: flex;
-        gap: 1rem
-    }
-
-    #main {
-        position: relative;
-        flex-grow: 1
-    }
-
     #canvasContainer {
         position: relative;
         aspect-ratio: 1 / 1;
@@ -623,28 +623,5 @@
 
     #warnings .alert:last-child {
         margin-bottom: 0;
-    }
-
-    #toolbar {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem
-    }
-
-    #toolbar > #buttons_bottom {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem
-    }
-
-    .loading {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: rgba(255, 255, 255, 0.7);
     }
 </style>
