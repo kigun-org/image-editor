@@ -1,18 +1,17 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import {Application, Assets, ColorMatrixFilter, Sprite} from "pixi.js"
     import {onMount} from "svelte"
 
-    export let imageBlob
 
-    let canvasContainer
+    let canvasContainer = $state()
 
     const app = new Application()
     let image
     let brightnessFilter
     let contrastFilter
 
-    export let rotation = 0
-    $: adjustRotation(rotation)
     function adjustRotation(newValue) {
         if (image !== undefined) {
             image.angle = newValue
@@ -21,8 +20,6 @@
         }
     }
 
-    export let flipH
-    $: adjustFlipHorizontal(flipH)
     function adjustFlipHorizontal(newValue) {
         if (image !== undefined) {
             image.scale.x = newValue ? -1 : 1
@@ -31,8 +28,6 @@
         }
     }
 
-    export let flipV
-    $: adjustFlipVertical(flipV)
     function adjustFlipVertical(newValue) {
         if (image !== undefined) {
             image.scale.y = newValue ? -1 : 1
@@ -41,8 +36,6 @@
         }
     }
 
-    export let brightness = 1
-    $: adjustBrightness(brightness)
     function adjustBrightness(newValue) {
         if (brightnessFilter !== undefined) {
             brightnessFilter.brightness(newValue)
@@ -51,8 +44,23 @@
         }
     }
 
-    export let contrast = 0
-    $: adjustContrast(contrast)
+    interface Props {
+        imageBlob: any;
+        rotation?: number;
+        flipH: any;
+        flipV: any;
+        brightness?: number;
+        contrast?: number;
+    }
+
+    let {
+        imageBlob,
+        rotation = 0,
+        flipH,
+        flipV,
+        brightness = 1,
+        contrast = 0
+    }: Props = $props();
     function adjustContrast(newValue) {
         if (contrastFilter !== undefined) {
             contrastFilter.contrast(newValue)
@@ -95,6 +103,21 @@
         app.render()
         app.ticker.stop()
     })
+    run(() => {
+        adjustRotation(rotation)
+    });
+    run(() => {
+        adjustFlipHorizontal(flipH)
+    });
+    run(() => {
+        adjustFlipVertical(flipV)
+    });
+    run(() => {
+        adjustBrightness(brightness)
+    });
+    run(() => {
+        adjustContrast(contrast)
+    });
 </script>
 
 <div id="backgroundSubContainer" bind:this={canvasContainer}></div>

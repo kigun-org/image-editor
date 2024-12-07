@@ -1,18 +1,32 @@
 <script lang="ts">
     import {createEventDispatcher} from "svelte";
 
-    export let flipH: boolean
-    export let flipV: boolean
-    export let rotation: number
 
-    export let cropWarning: boolean
-    export let keepAspectRatio: boolean
 
-    export let brightness: number
-    export let contrast: number
 
-    export let markers
-    export let activeMarker
+    interface Props {
+        flipH: boolean;
+        flipV: boolean;
+        rotation: number;
+        cropWarning: boolean;
+        keepAspectRatio: boolean;
+        brightness: number;
+        contrast: number;
+        markers: any;
+        activeMarker: any;
+    }
+
+    let {
+        flipH = $bindable(),
+        flipV = $bindable(),
+        rotation = $bindable(),
+        cropWarning,
+        keepAspectRatio = $bindable(),
+        brightness = $bindable(),
+        contrast = $bindable(),
+        markers = $bindable(),
+        activeMarker = $bindable()
+    }: Props = $props();
 
     const dispatch = createEventDispatcher()
 </script>
@@ -24,20 +38,20 @@
         </h2>
         <div>
             <div class="d-flex justify-content-center gap-1">
-                <button class="btn btn-outline-secondary" class:active={flipH} on:click={() => flipH = !flipH}
+                <button class="btn btn-outline-secondary" class:active={flipH} onclick={() => flipH = !flipH}
                         type="button">
                     <i class="bi bi-symmetry-vertical"></i>
                 </button>
-                <button class="btn btn-outline-secondary" class:active={flipV} on:click={() => flipV = !flipV}
+                <button class="btn btn-outline-secondary" class:active={flipV} onclick={() => flipV = !flipV}
                         type="button">
                     <i class="bi bi-symmetry-horizontal"></i>
                 </button>
 
-                <button class="btn btn-outline-secondary" on:click={() => rotation = rotation + 90}>
+                <button class="btn btn-outline-secondary" onclick={() => rotation = rotation + 90}>
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
 
-                <button class="btn btn-outline-secondary" on:click={() => rotation = rotation - 90}>
+                <button class="btn btn-outline-secondary" onclick={() => rotation = rotation - 90}>
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </button>
             </div>
@@ -46,8 +60,8 @@
                 Rotation ({rotation}&deg;)
                 <br>
                 <input bind:value={rotation} type="range" max="180" min="-180" step="1"
-                       on:pointerdown={() => dispatch('rotationStart')}
-                       on:pointerup={() => dispatch('rotationEnd')}>
+                       onpointerdown={() => dispatch('rotationStart')}
+                       onpointerup={() => dispatch('rotationEnd')}>
             </div>
         </div>
     </div>
@@ -93,24 +107,24 @@
             Markers
         </h2>
         <div class="d-flex flex-wrap justify-content-center gap-1">
-            <button class="btn btn-outline-secondary" on:click={() => dispatch('drawArrow')}>
+            <button class="btn btn-outline-secondary" onclick={() => dispatch('drawArrow')}>
                 <i class="bi bi-arrow-right"></i>
             </button>
 
-            <button class="btn btn-outline-secondary" on:click={() => dispatch('drawCircle')}>
+            <button class="btn btn-outline-secondary" onclick={() => dispatch('drawCircle')}>
                 <i class="bi bi-circle"></i>
             </button>
 
-            <button class="btn btn-outline-secondary" on:click={() => dispatch('drawRect')}>
+            <button class="btn btn-outline-secondary" onclick={() => dispatch('drawRect')}>
                 <i class="bi bi-square-fill"></i>
             </button>
 
-            <button class="btn btn-outline-secondary" on:click={() => dispatch('drawText')}>
+            <button class="btn btn-outline-secondary" onclick={() => dispatch('drawText')}>
                 <i class="bi bi-type"></i>
             </button>
 
             <button class="btn btn-danger" disabled={!markers.includes(activeMarker)}
-                    on:click={() => dispatch('deleteMarker')}>
+                    onclick={() => dispatch('deleteMarker')}>
                 <i class="bi bi-trash"></i>
             </button>
         </div>

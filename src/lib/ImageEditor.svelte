@@ -7,15 +7,17 @@
 
     const MAX_IMAGE_DIMENSION = 8192
 
-    export let imageBlob = undefined
-    export let galleryURL
-    export let saveCallback
 
-    let editorBlob = undefined
+    let editorBlob = $state(undefined)
 
-    let showBrowser = false
+    let showBrowser = $state(false)
 
-    export let validators = []
+    let {
+        imageBlob = undefined,
+        galleryURL,
+        saveCallback,
+        validators = []
+    } = $props();
 
     function showBrowsePanel() {
         showBrowser = true
@@ -84,7 +86,7 @@
     })
 </script>
 
-<div class="upload-container" on:dragover={handleDragOver} on:drop={handleDrop} role="form">
+<div class="upload-container" ondragover={handleDragOver} ondrop={handleDrop} role="form">
     {#if editorBlob !== undefined}
         <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
@@ -93,7 +95,7 @@
                 <div>
                     Select an image
                 </div>
-                <button class="btn btn-close" on:click={() => showBrowser = false}></button>
+                <button class="btn btn-close" onclick={() => showBrowser = false}></button>
             </div>
 
             <Gallery url={galleryURL} on:select={imageSelected}/>
@@ -103,7 +105,7 @@
             <form enctype="multipart/form-data" class="upload">
                 <label>
                     <input type="file" accept="image/*"
-                           on:change={handleInputChange}>
+                           onchange={handleInputChange}>
                     <i class="bi bi-upload fs-1"></i>
                     <span>
                         Upload an image by clicking here,<br>
@@ -118,7 +120,7 @@
             </div>
 
             {#if galleryURL !== undefined}
-                <div on:click={showBrowsePanel}>
+                <div onclick={showBrowsePanel}>
                     <i class="bi bi-cloud fs-1"></i>
                     <span>Select an existing image</span>
                 </div>

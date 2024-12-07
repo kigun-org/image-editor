@@ -4,7 +4,7 @@
 
     import ImageEditor from "./lib/ImageEditor.svelte";
 
-    let imageSources = []
+    let imageSources = $state([])
 
     function downloadCallback(blob) {
         return new Promise((resolve) => {

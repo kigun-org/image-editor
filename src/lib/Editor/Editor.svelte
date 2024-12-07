@@ -1,42 +1,42 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import Background from "./Background.svelte";
     import Toolbar from "./Toolbar.svelte";
 
-    export let originalImageBlob
 
-    export let validators
-    let warnings = []
+    let warnings = $state([])
 
-    export let saveCallback
-    let saving = false
-    let saveError = false
+    let { originalImageBlob, validators, saveCallback } = $props();
+    let saving = $state(false)
+    let saveError = $state(false)
 
-    let background
+    let background = $state()
 
-    let canvasElement
+    let canvasElement = $state()
 
     let canvas
     let imagePlaceholder
     let maxDimension
 
-    let crop = {
+    let crop = $state({
         rect: undefined,
         background: undefined,
         grid: undefined,
         warning: false
-    }
+    })
 
-    let flipH = false
-    let flipV = false
-    let rotation = 0
+    let flipH = $state(false)
+    let flipV = $state(false)
+    let rotation = $state(0)
 
-    let brightness = 1
-    let contrast = 0
+    let brightness = $state(1)
+    let contrast = $state(0)
 
-    let markers = []
-    let activeMarker
+    let markers = $state([])
+    let activeMarker = $state()
 
     function validate(originalImageBlob, validators) {
         const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
@@ -68,7 +68,6 @@
         canvas.renderAll()
     }
 
-    $: updateRotation(rotation)
     function updateRotation(newValue) {
         if (canvas !== undefined) {
             if (newValue > 180) {
@@ -91,8 +90,7 @@
         }
     }
 
-    let keepAspectRatio = true
-    $: updateKeepAspectRatio(keepAspectRatio)
+    let keepAspectRatio = $state(true)
 
     function updateKeepAspectRatio(newValue) {
         if (crop.rect !== undefined) {
@@ -523,6 +521,12 @@
         canvas.on("selection:updated", onSelectionUpdated)
         canvas.on("selection:cleared", onSelectionUpdated)
     })
+    run(() => {
+        updateRotation(rotation)
+    });
+    run(() => {
+        updateKeepAspectRatio(keepAspectRatio)
+    });
 </script>
 
 <div id="editor_component">
@@ -541,7 +545,7 @@
                 {#each warnings as warning}
                     <div class="alert alert-warning d-flex justify-content-between align-items-center">
                         {warning}
-                        <button class="btn-close m-0" on:click={hideWarning}></button>
+                        <button class="btn-close m-0" onclick={hideWarning}></button>
                     </div>
                 {/each}
             </div>
@@ -556,14 +560,14 @@
                  bind:markers bind:activeMarker on:deleteMarker={deleteSelectedMarker} />
 
         <div id="buttons_bottom">
-            <button class="btn btn-outline-secondary" on:click={() => reset()}>
+            <button class="btn btn-outline-secondary" onclick={() => reset()}>
                 Reset changes
             </button>
 
             <div style="position: relative; width: 100%">
                 <button class="btn btn-lg btn-primary w-100" class:btn-danger={saveError}
                         class:btn-primary={!saveError} disabled={saveError}
-                        on:click={saveImage}>
+                        onclick={saveImage}>
                     {#if saveError}
                         <i class="bi bi-exclamation-triangle me-1"></i>
                         Error
