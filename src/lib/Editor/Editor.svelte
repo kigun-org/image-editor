@@ -530,7 +530,7 @@
 </script>
 
 <div class="k-flex k-gap-3 k-flex-col md:k-flex-row">
-    <div class="k-flex-auto k-aspect-square k-bg-amber-100 k-relative">
+    <div class="k-flex-auto k-aspect-square k-relative">
         <div id="main">
             <div id="canvasContainer">
                 <div id="backgroundContainer" style="position: absolute">
@@ -540,18 +540,26 @@
                 <canvas bind:this={canvasElement}></canvas>
                 <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
             </div>
-
-            {#if warnings.length > 0}
-                <div id="warnings">
-                    {#each warnings as warning}
-                        <div class="alert alert-warning d-flex justify-content-between align-items-center">
-                            {warning}
-                            <button class="btn-close m-0" onclick={hideWarning}></button>
-                        </div>
-                    {/each}
-                </div>
-            {/if}
         </div>
+
+        {#if warnings.length > 0}
+        <div class="k-absolute k-top-4 k-left-4 k-right-4 k-flex k-flex-col k-gap-2">
+            {#each warnings as warning}
+                <div class="k-alert k-alert-warning" role="alert">
+                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                        <path d="M12 9v4"/>
+                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                    <span>{warning}</span>
+<!--                    <button class="btn-close m-0" onclick={hideWarning}></button>-->
+                </div>
+            {/each}
+        </div>
+        {/if}
     </div>
     <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
         <Toolbar bind:flipH bind:flipV bind:brightness bind:contrast

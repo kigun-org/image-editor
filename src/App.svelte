@@ -8,7 +8,7 @@
     
     function downloadCallback(blob) {
         return new Promise(async (resolve) => {
-            await new Promise(r => setTimeout(r, 1000))
+            await new Promise(r => setTimeout(r, 500))
             imageSources = [...imageSources, URL.createObjectURL(blob)]
             resolve()
         })
