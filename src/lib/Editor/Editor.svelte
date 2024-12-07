@@ -374,15 +374,20 @@
         }).toBlob((blob) => {
             saveCallback(blob).then(() => {
                 saving = false
+                canvas.backgroundImage = undefined
+                canvas.backgroundColor = undefined
+                canvas.setActiveObject(crop.rect)
+                canvas.renderAll()
             }).catch(() => {
                 saving = false
+                canvas.backgroundImage = undefined
+                canvas.backgroundColor = undefined
+                canvas.setActiveObject(crop.rect)
+                canvas.renderAll()
+
                 saveError = true
             })
-            canvas.backgroundImage = undefined
-            canvas.backgroundColor = undefined
         }, "image/jpeg", 1.0)
-
-        canvas.setActiveObject(crop.rect)
     }
 
     onMount(async () => {
