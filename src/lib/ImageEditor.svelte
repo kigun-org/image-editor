@@ -96,7 +96,7 @@
                 <div>
                     Select an image
                 </div>
-                <button class="btn btn-close" onclick={() => showBrowser = false}></button>
+                <button class="btn btn-close" aria-label="Close" onclick={() => showBrowser = false}></button>
             </div>
 
             <Gallery url={galleryURL} on:select={imageSelected}/>

@@ -619,17 +619,4 @@
         width: 100%;
         height: 100%;
     }
-
-    #warnings {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-    #warnings .alert:last-child {
-        margin-bottom: 0;
-    }
 </style>
