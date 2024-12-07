@@ -1,15 +1,17 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
     import {onMount} from "svelte";
     import Background from "./Background.svelte";
     import Toolbar from "./Toolbar.svelte";
 
+    let {
+        originalImageBlob,
+        validators,
+        saveCallback
+    } = $props()
 
     let warnings = $state([])
 
-    let { originalImageBlob, validators, saveCallback } = $props();
     let saving = $state(false)
     let saveError = $state(false)
 
@@ -68,12 +70,12 @@
         canvas.renderAll()
     }
 
-    function updateRotation(newValue) {
+    $effect(() => {
         if (canvas !== undefined) {
-            if (newValue > 180) {
-                rotation = -180 + newValue % 180
+            if (rotation > 180) {
+                rotation = -180 + rotation % 180
             } else if (rotation < -180) {
-                rotation = 180 + newValue % 180
+                rotation = 180 + rotation % 180
             }
             imagePlaceholder.rotate(rotation)
             imagePlaceholder.setCoords()
@@ -88,16 +90,20 @@
 
             canvas.renderAll()
         }
-    }
+    })
 
     let keepAspectRatio = $state(true)
-
-    function updateKeepAspectRatio(newValue) {
+    $effect(() => {
         if (crop.rect !== undefined) {
-            crop.rect.setControlsVisibility({mt: !newValue, mr: !newValue, mb: !newValue, ml: !newValue})
+            crop.rect.setControlsVisibility({
+                mt: !keepAspectRatio,
+                mr: !keepAspectRatio,
+                mb: !keepAspectRatio,
+                ml: !keepAspectRatio
+            })
             canvas.renderAll()
         }
-    }
+    })
 
     function createCropRect(image) {
         const rect = new Rect({
@@ -335,7 +341,6 @@
         flipV = false
 
         rotation = 0
-        updateRotation(0)
 
         resetCrop()
         keepAspectRatio = true
@@ -378,13 +383,14 @@
                 canvas.backgroundColor = undefined
                 canvas.setActiveObject(crop.rect)
                 canvas.renderAll()
-            }).catch(() => {
+            }).catch((e) => {
                 saving = false
                 canvas.backgroundImage = undefined
                 canvas.backgroundColor = undefined
                 canvas.setActiveObject(crop.rect)
                 canvas.renderAll()
 
+                console.log(e)
                 saveError = true
             })
         }, "image/jpeg", 1.0)
@@ -526,12 +532,6 @@
         canvas.on("selection:updated", onSelectionUpdated)
         canvas.on("selection:cleared", onSelectionUpdated)
     })
-    run(() => {
-        updateRotation(rotation)
-    });
-    run(() => {
-        updateKeepAspectRatio(keepAspectRatio)
-    });
 </script>
 
 <div class="k-flex k-gap-3 k-flex-col md:k-flex-row">
@@ -540,7 +540,7 @@
             <div id="canvasContainer">
                 <div id="backgroundContainer" style="position: absolute">
                     <Background bind:this={background} {brightness}
-                                {contrast} imageBlob={originalImageBlob} {flipH} {flipV} {rotation}/>
+                                {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
                 </div>
                 <canvas bind:this={canvasElement}></canvas>
                 <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
@@ -548,38 +548,39 @@
         </div>
 
         {#if warnings.length > 0}
-        <div class="k-absolute k-top-4 k-left-4 k-right-4 k-flex k-flex-col k-gap-2">
-            {#each warnings as warning}
-                <div class="k-alert k-alert-warning" role="alert">
-                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                        <path d="M12 9v4"/>
-                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
-                        <path d="M12 16h.01"/>
-                    </svg>
-                    <span>{warning}</span>
-<!--                    <button class="btn-close m-0" onclick={hideWarning}></button>-->
-                </div>
-            {/each}
-        </div>
+            <div class="k-absolute k-top-4 k-left-4 k-right-4 k-flex k-flex-col k-gap-2">
+                {#each warnings as warning}
+                    <div class="k-alert k-alert-warning" role="alert">
+                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                            <path d="M12 9v4"/>
+                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
+                            <path d="M12 16h.01"/>
+                        </svg>
+                        <span>{warning}</span>
+                        <!--                    <button class="btn-close m-0" onclick={hideWarning}></button>-->
+                    </div>
+                {/each}
+            </div>
         {/if}
     </div>
     <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
-        <Toolbar bind:flipH bind:flipV bind:brightness bind:contrast
-                 bind:rotation on:rotationStart={handleRotationStart} on:rotationEnd={handleRotationEnd}
-                 bind:keepAspectRatio cropWarning={crop.warning}
-                 on:drawArrow={drawArrow} on:drawCircle={drawCircle} on:drawRect={drawRect} on:drawText={drawText}
-                 bind:markers bind:activeMarker on:deleteMarker={deleteSelectedMarker} />
+        <Toolbar bind:activeMarker bind:brightness bind:contrast bind:flipH
+                 bind:flipV bind:keepAspectRatio bind:markers
+                 bind:rotation cropWarning={crop.warning}
+                 drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
+                 deleteMarker={deleteSelectedMarker}
+                 rotationEnd={handleRotationEnd} rotationStart={handleRotationStart}/>
 
         <div class="k-flex k-flex-col k-gap-2">
-            <button class="k-btn k-w-full" onclick={() => reset()}>
+            <button class="k-btn k-w-full" onclick={reset}>
                 Reset changes
             </button>
 
-            <button class="k-btn k-w-full" class:k-btn-primary={!saveError}
-                    class:k-btn-danger={saveError} disabled={saveError || saving}
+            <button class="k-btn k-w-full" class:k-btn-danger={saveError}
+                    class:k-btn-primary={!saveError} disabled={saveError || saving}
                     onclick={saveImage}>
                 {#if saveError}
                     <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
@@ -595,8 +596,7 @@
                     <span class="k-loading k-loading-spinner"></span>
                     Saving
                 {:else}
-                    <svg
-                         fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                          xmlns="http://www.w3.org/2000/svg">
                         <path d="M0 0h24v24H0z" fill="none" stroke="none"/>

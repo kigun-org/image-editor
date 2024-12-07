@@ -1,31 +1,41 @@
 <script lang="ts">
-    import {createEventDispatcher} from "svelte";
-
     interface Props {
         flipH: boolean;
         flipV: boolean;
         rotation: number;
+        rotationStart: () => void;
+        rotationEnd: () => void;
         cropWarning: boolean;
         keepAspectRatio: boolean;
         brightness: number;
         contrast: number;
         markers: any;
         activeMarker: any;
+        drawArrow: () => void;
+        drawCircle: () => void;
+        drawRect: () => void;
+        drawText: () => void;
+        deleteMarker: () => void;
     }
 
     let {
         flipH = $bindable(),
         flipV = $bindable(),
         rotation = $bindable(),
+        rotationStart,
+        rotationEnd,
         cropWarning,
         keepAspectRatio = $bindable(),
         brightness = $bindable(),
         contrast = $bindable(),
         markers = $bindable(),
-        activeMarker = $bindable()
+        activeMarker = $bindable(),
+        drawArrow,
+        drawCircle,
+        drawRect,
+        drawText,
+        deleteMarker
     }: Props = $props();
-
-    const dispatch = createEventDispatcher()
 </script>
 
 <div class="k-flex k-flex-col k-gap-5">
@@ -90,7 +100,7 @@
 
         <input class="k-range" max="180" min="-180" step="1" type="range"
                bind:value={rotation}
-               onpointerdown={() => dispatch('rotationStart')} onpointerup={() => dispatch('rotationEnd')}/>
+               onpointerdown={() => rotationStart()} onpointerup={() => rotationEnd()}/>
     </div>
 
     <div>
@@ -157,7 +167,7 @@
 
         <div class="k-flex k-justify-between k-gap-1 k-mb-1">
             <button aria-label="Arrow marker" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => dispatch('drawArrow')}>
+                    onclick={drawArrow}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -169,7 +179,7 @@
             </button>
 
             <button aria-label="Circle marker" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => dispatch('drawCircle')}>
+                    onclick={drawCircle}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -179,7 +189,7 @@
             </button>
 
             <button aria-label="Rectangle marker" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => dispatch('drawRect')}>
+                    onclick={drawRect}>
                 <svg fill="currentColor" height="24" viewBox="0 0 24 24"
                      width="24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
@@ -188,7 +198,7 @@
             </button>
 
             <button aria-label="Text" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => dispatch('drawText')}>
+                    onclick={drawText}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -203,7 +213,7 @@
 
         <div>
             <button class="k-btn k-btn-error k-w-full" disabled={!markers.includes(activeMarker)}
-                    onclick={() => dispatch('deleteMarker')}>
+                    onclick={deleteMarker}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
