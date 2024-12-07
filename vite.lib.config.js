@@ -19,6 +19,7 @@ export default defineConfig({
             ],
             formats: ['es'],
             fileName: (_, entryAlias) => `${entryAlias}.js`,
+            cssFileName: 'ImageEditor'
         }
     }
 })
