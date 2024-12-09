@@ -1,19 +1,18 @@
 <script lang="ts">
-    import 'bootstrap-icons/font/bootstrap-icons.css'
-    import 'bootstrap/dist/css/bootstrap.css'
-    
+    import 'fslightbox'
+
     import ImageEditor from "./lib/ImageEditor.svelte";
-    
+
     let imageSources = $state([])
     
-    function downloadCallback(blob) {
-        return new Promise(async (resolve) => {
-            await new Promise(r => setTimeout(r, 500))
-            imageSources = [...imageSources, URL.createObjectURL(blob)]
+    function saveCallback(blob) {
+        return new Promise((resolve) => {
+            imageSources.push(URL.createObjectURL(blob))
+            setTimeout(() => refreshFsLightbox(), 200)
             resolve()
         })
     }
-    
+
     const validators = [
         {
             message: "Low resolution image. Upload the original high resolution image.",
@@ -28,7 +27,7 @@
 
 <div class="d-flex justify-center">
     <div class="mx-auto flex-grow-1" style="max-width: 1100px">
-        <ImageEditor galleryURL="/gallery.json" saveCallback={downloadCallback} {validators}/>
+        <ImageEditor galleryURL="/gallery.json" {saveCallback} {validators}/>
     </div>
 </div>
 
@@ -36,7 +35,9 @@
     <div class="my-3">Images</div>
     <div class="screenshots d-flex flex-wrap gap-2">
         {#each imageSources as src}
-            <img src={src} alt="Screenshot"/>
+            <a href={src} data-fslightbox>
+                <img src={src} alt="Screenshot" />
+            </a>
         {/each}
     </div>
 {/if}
