@@ -1,7 +1,11 @@
 # Image Editor
 
-A simple web-based image editor component, written in Svelte but
-outputting JS/CSS files ready to be included in any HTML page.
+A free lightweight web-based image editor component, available as a pair
+of JS+CSS files ready to be included in any HTML page.
+
+It was initially developed for editing photographs, so it supports large
+image sizes (and automatically downsizes the images if they exceed your browser's
+canvas size limit).
 
 ## Building
 
@@ -22,7 +26,7 @@ which you can include in your website as shown below
 
 ## Using
 
-Add the following to your HTML page:
+Download the latest release files from GitHub and add the following to your HTML page:
 
 1) The stylesheet, in `<head>`:
 ```
@@ -95,5 +99,5 @@ means that if you use it in your project, it must also be
 open sourced under a similar license (but read the LICENSE file
 for the full details).
 
-If you are interested in using the library for commercial purposes,
-please contact us.
+If you are interested in using the library under a more permissive
+license, please contact us (www.kigun.org).
