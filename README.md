@@ -7,6 +7,8 @@ It was initially developed for editing photographs, so it supports large
 image sizes (and automatically downsizes the images if they exceed your browser's
 canvas size limit).
 
+Online demo: https://photo.kigun.org/
+
 ## Building
 
 Download the repository:
