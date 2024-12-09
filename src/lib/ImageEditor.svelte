@@ -85,23 +85,35 @@
     })
 </script>
 
-<div class="upload-container" ondragover={handleDragOver} ondrop={handleDrop} role="form">
+<div class="image-editor k-container">
     {#if editorBlob !== undefined}
         <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
-        <div class="browse text-start p-2 d-flex flex-column">
-            <div class="d-flex align-items-center justify-content-between my-2">
-                <div>
-                    Select an image
+        <div class="k-flex h-100 k-flex-col k-overflow-y-auto k-p-4">
+            <div class="k-navbar k-shadow-lg k-rounded-box k-bg-base-100 k-mb-6">
+                <div class="k-flex-1">
+                    <div class="k-text-xl">Select an image</div>
                 </div>
-                <button class="btn btn-close" aria-label="Close" onclick={() => showBrowser = false}></button>
+                <div class="k-flex-none">
+                    <button class="k-btn k-btn-square k-btn-ghost"
+                            aria-label="Close" onclick={() => showBrowser = false}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6l-12 12"/>
+                            <path d="M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <Gallery url={galleryURL} on:select={imageSelected}/>
         </div>
     {:else}
-        <div class="instructions">
-            <label>
+        <div class="h-100 k-flex k-flex-col k-justify-between k-text-base-content k-p-4
+                    k-bg-base-200 hover:k-bg-blue-100 k-transition-colors"
+             ondragover={handleDragOver} ondrop={handleDrop} role="form">
+            <label class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8 k-p-8
+                          hover:k-bg-blue-200 k-transition-colors">
                 <input type="file" accept="image/*" class="k-hidden"
                        onchange={handleInputChange}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -111,12 +123,13 @@
                     <path d="M12 4l0 12"/>
                 </svg>
                 <span>
-                    Upload an image by clicking here,<br>
-                    or by dragging and dropping
-                </span>
+                        Upload an image by clicking here,<br>
+                        or by dragging and dropping
+                    </span>
             </label>
 
-            <div>
+            <div class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8 k-p-8
+                        hover:k-bg-blue-200 k-transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/>
@@ -126,7 +139,9 @@
             </div>
 
             {#if galleryURL !== undefined}
-                <div aria-label="Select an existing image" onclick={showBrowsePanel}>
+                <div class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8 k-p-8
+                            hover:k-bg-blue-200 k-transition-colors"
+                     role="button" aria-label="Select an existing image" onclick={showBrowsePanel}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878"/>
@@ -139,51 +154,7 @@
 </div>
 
 <style>
-    .upload-container {
-        position: relative;
-        width: 100%;
-    }
-
-    .upload-container .instructions, .upload-container .browse {
-        aspect-ratio: 3 / 2;
-        border: 5px dotted rgba(var(--bs-secondary-rgb), 0.15);
-    }
-
-    .upload-container .instructions {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-
-        color: rgba(var(--bs-secondary-rgb), 0.7);
-        background-color: rgba(var(--bs-secondary-rgb), 0.1);
-
-        transition: 250ms ease;
-    }
-
-    .upload-container .instructions:hover {
-        border-color: rgba(var(--bs-primary-rgb), 0.2);
-        background-color: rgba(var(--bs-primary-rgb), 0.1);
-    }
-
-    .upload-container .instructions div,
-    .upload-container .instructions label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 2.5rem;
-
-        width: 100%;
-        flex-grow: 1;
-
-        transition: 250ms ease;
-    }
-
-    .upload-container .instructions > div:hover, .upload-container .instructions label:hover {
-        color: var(--bs-primary-text-emphasis);
-        background-color: rgba(var(--bs-primary-rgb), 0.05);
-    }
-
-    .upload-container .browse {
-        overflow-y: auto;
+    .image-editor {
+        aspect-ratio: 5 / 4;
     }
 </style>
