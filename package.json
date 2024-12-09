@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "buildlib": "vite build -c vite.lib.config.js",
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

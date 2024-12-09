@@ -8,9 +8,7 @@
 
     const MAX_IMAGE_DIMENSION = 8192
 
-
     let editorBlob = $state(undefined)
-
     let showBrowser = $state(false)
 
     let {

@@ -32,7 +32,7 @@
 </div>
 
 {#if imageSources.length > 0}
-    <div class="my-3">Images</div>
+    <h2 class="mt-5 text-center">Images</h2>
     <div class="screenshots d-flex flex-wrap gap-2">
         {#each imageSources as src}
             <a href={src} data-fslightbox>
