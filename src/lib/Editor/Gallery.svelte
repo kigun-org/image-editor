@@ -1,41 +1,28 @@
 <script lang="ts">
-    import {createEventDispatcher} from "svelte";
+    let {url, imageSelected} = $props();
 
-    const dispatch = createEventDispatcher()
-
-    let { url } = $props();
-
-    let caseImages = $state()
-
-    function selectImage(image) {
-        dispatch("select", image)
-    }
-
-    fetch(url).then((response) => {
-        caseImages = response.json()
-    })
+    let caseImages = $state(fetch(url).then(async (response) => {
+        return response.json()
+    }))
 </script>
 
 {#if caseImages}
     {#await caseImages}
-        <div class="d-flex flex-column align-items-center justify-content-center gap-4 h-100 text-secondary">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <div>
-                Loading images
-            </div>
+        <div class="k-flex k-flex-col k-items-center k-gap-6 k-mt-12">
+            <span class="k-text-xl">Loading images</span>
+            <span class="k-loading k-loading-spinner k-loading-lg"></span>
         </div>
     {:then result}
-        <div class="overflow-y-scroll d-flex flex-column gap-2">
+        <div class="k-overflow-y-scroll k-flex k-flex-col k-gap-4 k-p-2">
             {#each result.visits as section}
                 <div>
-                    <div class="fs-5">{section.title}</div>
-                    <div class="d-flex flex-wrap gap-1">
+                    <div class="k-text-lg k-mb-2">{section.title}</div>
+                    <div class="k-flex k-flex-wrap k-gap-2">
                         {#each section.images as image}
-                            <div class="thumb_image" onclick={() => selectImage(image)}>
-                                <img src={image.thumbnail} alt={image.id}>
-                            </div>
+                            <button class="k-border-2"
+                                    onclick={() => imageSelected(image.url)}>
+                                <img class="thumbnail" src={image.thumbnail} alt={image.id}>
+                            </button>
                         {/each}
                     </div>
                 </div>
@@ -44,17 +31,24 @@
             {/each}
         </div>
     {:catch ex}
-        <div class="d-flex flex-column align-items-center justify-content-center gap-4 h-100 bg-danger-subtle text-danger">
-            <i class="bi bi-exclamation-triangle fs-1"></i>
-            <div class="text-center">
-                Error loading images<br>
+        <div class="k-flex k-justify-center">
+            <div class="k-flex-shrink-1">
+                <div class="k-alert k-alert-error k-mt-6 k-mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                         stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 9v4"/>
+                        <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                    <span>Error loading images</span>
+                </div>
             </div>
         </div>
     {/await}
 {/if}
 
 <style>
-    .thumb_image img {
+    img.thumbnail {
         height: 100px;
     }
 </style>
