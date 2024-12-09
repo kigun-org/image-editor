@@ -63,6 +63,7 @@ The following options are supported:
   {
     test: A test function receiving an image blob and returning true if it is not valid
     message: A message string to show when the callback returns true
+  }
   ```
 - `saveCallback`: A function receiving the final image as a blob and returning
   a Promise, which should resolve once the image is saved and reject when an error
@@ -93,6 +94,13 @@ the typical npm output.
 
 If there is interest in having an npm package, we may consider
 adding it in the future.
+
+### Where are the sample photos in the online demo from?
+
+They are random photos I've selected from Unsplash:
+- https://unsplash.com/photos/a-white-pitcher-filled-with-flowers-on-top-of-a-table-6hZbcPBdyek
+- https://unsplash.com/photos/a-long-line-of-road-going-through-the-snow-rFwbA9phekI
+- https://unsplash.com/photos/a-man-walking-down-a-street-holding-a-suitcase-3rDhAq51AOE
 
 ## License
 
