@@ -10,7 +10,7 @@
 
     let {
         imageBlob = undefined,
-        galleryURL,
+        galleryURL = undefined,
         saveCallback,
         validators = []
     } = $props();
@@ -96,7 +96,7 @@
     })
 </script>
 
-<div class="image-editor k-container">
+<div class="image-editor tailwind k-container">
     {#if editorBlob !== undefined}
         <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
