@@ -536,15 +536,13 @@
 
 <div class="k-flex k-gap-3 k-flex-col md:k-flex-row">
     <div class="k-flex-auto k-aspect-square k-relative">
-        <div id="main">
-            <div id="canvasContainer">
-                <div id="backgroundContainer" style="position: absolute">
-                    <Background bind:this={background} {brightness}
-                                {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
-                </div>
-                <canvas bind:this={canvasElement}></canvas>
-                <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
+        <div class="k-relative k-aspect-square k-flex k-items-center k-justify-center k-mx-auto">
+            <div class="k-absolute k-w-full k-h-full">
+                <Background bind:this={background} {brightness}
+                            {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
             </div>
+            <canvas bind:this={canvasElement} class="k-w-full k-h-full"></canvas>
+            <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
         </div>
 
         {#if warnings.length > 0}
@@ -608,20 +606,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    #canvasContainer {
-        position: relative;
-        aspect-ratio: 1 / 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-    }
-
-    #canvasContainer > #backgroundContainer,
-    #canvasContainer > canvas {
-        width: 100%;
-        height: 100%;
-    }
-</style>

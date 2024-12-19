@@ -11,17 +11,17 @@ export default {
 
   plugins: [
     scopedPreflightStyles({
-      isolationStrategy: isolateInsideOfContainer('.tailwind'), // style root name, used to wrap Popper menus etc
+      isolationStrategy: isolateInsideOfContainer('.image-editor'), // style root name, used to wrap Popper menus etc
     }),
     daisyui
   ],
 
   daisyui: {
     themes: false,
-    themeRoot: ".tailwind"
+    themeRoot: ".image-editor"
   },
 
-  important: '.tailwind',
+  important: '.image-editor',
 
   prefix: "k-"
 } satisfies Config;

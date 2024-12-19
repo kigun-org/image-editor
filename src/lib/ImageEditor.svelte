@@ -96,12 +96,12 @@
     })
 </script>
 
-<div class="image-editor tailwind k-container">
+<div class="image-editor">
     {#if editorBlob !== undefined}
         <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
     {:else if showBrowser}
         <div class="k-flex h-100 k-flex-col k-p-4">
-            <div class="k-navbar k-shadow-lg k-rounded-box k-bg-base-100 k-mb-6">
+            <div class="k-navbar k-shadow-lg k-rounded-box k-mb-6">
                 <button class="k-btn k-btn-square k-btn-ghost k-me-3"
                         aria-label="Close" onclick={() => showBrowser = false}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
