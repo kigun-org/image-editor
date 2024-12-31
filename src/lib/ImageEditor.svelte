@@ -11,6 +11,7 @@
     let {
         imageBlob = undefined,
         galleryURL = undefined,
+        passthroughOriginal = true,
         saveCallback,
         validators = []
     } = $props();
@@ -20,21 +21,6 @@
 
     let fileInputElement = $state()
     let fileInputLabelElement = $state()
-
-    function showBrowsePanel() {
-        showBrowser = true
-    }
-
-    function imageSelected(imageURL) {
-        console.log(imageURL)
-        showBrowser = false
-
-        fetch(imageURL).then((response) => {
-            return response.blob()
-        }).then((blob) => {
-            loadImageBlob(blob)
-        })
-    }
 
     function handleDragOver(event) {
         event.preventDefault()
@@ -63,6 +49,22 @@
         loadImageBlob(ev.target.files[0])
     }
 
+    function imageSelected(imageURL, passthrough) {
+        fetch(imageURL).then((response) => {
+            return response.blob()
+        }).then((blob) => {
+            if (passthrough) {
+                saveCallback(blob).then(() => {
+                    showBrowser = false
+                })
+            } else {
+                loadImageBlob(blob).then(() => {
+                    showBrowser = false
+                })
+            }
+        })
+    }
+
     async function loadImageBlob(blob) {
         editorBlob = await resizeBlob(blob, MAX_IMAGE_DIMENSION)
     }
@@ -86,9 +88,7 @@
                 }
             })
         }
-    })
 
-    onMount(() => {
         // prevent scrolling when using spacebar to trigger file upload dialog
         window.addEventListener("keydown", (e) => {
             if (e.key === " " && e.target === fileInputLabelElement) e.preventDefault()
@@ -98,23 +98,13 @@
 
 <div class="image-editor">
     {#if editorBlob !== undefined}
-        <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
+        <div style="aspect-ratio: 5 / 4">
+            <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
+        </div>
     {:else if showBrowser}
         <div class="k-flex h-100 k-flex-col k-p-4">
-            <div class="k-navbar k-shadow-lg k-rounded-box k-mb-6">
-                <button class="k-btn k-btn-square k-btn-ghost k-me-3"
-                        aria-label="Close" onclick={() => showBrowser = false}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                         stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12l14 0"/>
-                        <path d="M5 12l6 6"/>
-                        <path d="M5 12l6 -6"/>
-                    </svg>
-                </button>
-                <div class="k-flex-1 k-text-xl">Select an image</div>
-            </div>
-
-            <Gallery url={galleryURL} {imageSelected}/>
+            <Gallery url={galleryURL} cancel={() => showBrowser = false}
+                     {imageSelected} {passthroughOriginal} />
         </div>
     {:else}
         <div class="h-100 k-flex k-flex-col k-justify-between k-text-base-content k-p-4
@@ -122,7 +112,7 @@
              ondragover={handleDragOver} ondrop={handleDrop} role="form">
 
             <label class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8
-                          hover:k-bg-base-300 k-transition-colors k-cursor-pointer">
+                          hover:k-bg-base-300 k-transition-colors k-cursor-pointer k-py-20">
                 <input bind:this={fileInputElement} type="file" accept="image/*" class="k-hidden"
                        onchange={handleInputChange}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -139,7 +129,7 @@
             </label>
 
             <div class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8
-                        hover:k-bg-base-300 k-transition-colors">
+                        hover:k-bg-base-300 k-transition-colors k-py-20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/>
@@ -150,8 +140,8 @@
 
             {#if galleryURL !== undefined}
                 <button class="k-flex-1 k-flex k-items-center k-justify-center k-gap-8
-                            hover:k-bg-base-300 k-transition-colors"
-                        aria-label="Select an existing image" onclick={showBrowsePanel}>
+                            hover:k-bg-base-300 k-transition-colors k-py-20"
+                        aria-label="Select an existing image" onclick={() => showBrowser = true}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878"/>
@@ -166,6 +156,5 @@
 
 <style>
     .image-editor {
-        aspect-ratio: 5 / 4;
     }
 </style>

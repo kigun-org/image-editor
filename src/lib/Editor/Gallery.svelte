@@ -1,28 +1,72 @@
 <script lang="ts">
-    let {url, imageSelected} = $props();
+    let {
+        url,
+        passthroughOriginal = true,
+        imageSelected,
+        cancel
+    } = $props();
 
-    let caseImages = $state(fetch(url).then(async (response) => {
+    let selectedImage = $state()
+
+    let caseImages = fetch(url).then(async (response) => {
         return response.json()
-    }))
+    })
+
+    function selectImage() {
+        imageSelected(selectedImage.url, false)
+    }
+
+    function passthroughImage() {
+        imageSelected(selectedImage.url, true)
+    }
 </script>
 
 {#if caseImages}
+    <div class="k-flex k-flex-wrap k-justify-between k-gap-2 k-shadow-lg k-rounded-box k-p-2 k-mb-6">
+        <div class="k-flex k-gap-2 k-items-center">
+            <button class="k-btn k-btn-square k-btn-ghost"
+                    aria-label="Close" onclick={cancel}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12l14 0"/>
+                    <path d="M5 12l6 6"/>
+                    <path d="M5 12l6 -6"/>
+                </svg>
+            </button>
+            <div class="k-text-xl">Select an image</div>
+        </div>
+        <div class="k-flex k-gap-2">
+            <button class="k-btn k-btn-primary" disabled={!selectedImage} onclick={selectImage}>
+                Edit before upload
+            </button>
+            {#if passthroughOriginal}
+                <button class="k-btn" disabled={!selectedImage} onclick={passthroughImage}>
+                    Copy original
+                </button>
+            {/if}
+        </div>
+    </div>
+
     {#await caseImages}
         <div class="k-flex k-flex-col k-items-center k-gap-6 k-mt-12">
             <span class="k-text-xl">Loading images</span>
             <span class="k-loading k-loading-spinner k-loading-lg"></span>
         </div>
     {:then result}
-        <div class="k-overflow-y-scroll k-flex k-flex-col k-gap-4 k-p-2">
+        <div class="k-overflow-y-scroll">
             {#each result.visits as section}
                 <div>
                     <div class="k-text-lg k-mb-2">{section.title}</div>
-                    <div class="k-flex k-flex-wrap k-gap-2">
-                        {#each section.images as image}
-                            <button class="k-border-2"
-                                    onclick={() => imageSelected(image.url)}>
+                    <div class="k-flex k-flex-wrap k-gap-1.5 k-shadow k-bg-base-200 k-p-2 k-m-2">
+                        {#each section.images as image, index}
+                            <label class="k-relative k-shrink-0">
                                 <img class="thumbnail" src={image.thumbnail} alt={image.id}>
-                            </button>
+                                <span class="k-absolute k-top-3 k-left-3">
+                                    <input type="radio" class="k-radio k-radio-primary"
+                                           class:k-bg-base-100={selectedImage !== image}
+                                           name="selected" value={image} bind:group={selectedImage} />
+                                </span>
+                            </label>
                         {/each}
                     </div>
                 </div>
@@ -49,6 +93,6 @@
 
 <style>
     img.thumbnail {
-        height: 100px;
+        height: 150px;
     }
 </style>
