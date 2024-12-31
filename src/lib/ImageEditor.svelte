@@ -102,12 +102,10 @@
             <Editor originalImageBlob={editorBlob} {validators} {saveCallback}/>
         </div>
     {:else if showBrowser}
-        <div class="k-flex h-100 k-flex-col k-p-4">
-            <Gallery url={galleryURL} cancel={() => showBrowser = false}
-                     {imageSelected} {passthroughOriginal} />
-        </div>
+        <Gallery url={galleryURL} cancel={() => showBrowser = false}
+                 {imageSelected} {passthroughOriginal} />
     {:else}
-        <div class="h-100 k-flex k-flex-col k-justify-between k-text-base-content k-p-4
+        <div class="k-flex k-flex-col k-justify-between k-text-base-content
                     k-bg-base-200 k-transition-colors"
              ondragover={handleDragOver} ondrop={handleDrop} role="form">
 
