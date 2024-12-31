@@ -53,12 +53,12 @@
             <span class="k-loading k-loading-spinner k-loading-lg"></span>
         </div>
     {:then result}
-        <div class="k-overflow-y-scroll">
+        <div class="k-p-2">
             {#each result.visits as section}
                 <div>
                     <div class="k-text-lg k-mb-2">{section.title}</div>
-                    <div class="k-flex k-flex-wrap k-gap-1.5 k-shadow k-bg-base-200 k-p-2 k-m-2">
-                        {#each section.images as image, index}
+                    <div class="k-flex k-gap-1.5 k-overflow-x-scroll lg:k-flex-wrap lg:k-overflow-x-auto k-shadow k-bg-base-200 k-p-2 k-my-2">
+                        {#each section.images as image}
                             <label class="k-relative k-shrink-0">
                                 <img class="thumbnail" src={image.thumbnail} alt={image.id}>
                                 <span class="k-absolute k-top-3 k-left-3">
