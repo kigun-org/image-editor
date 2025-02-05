@@ -39,6 +39,7 @@
 
     let markers = $state([])
     let activeMarker = $state()
+    let hiddenTextarea = $state()
 
     function validate(originalImageBlob, validators) {
         const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
@@ -266,8 +267,18 @@
         canvas.renderAll()
     }
 
+    class ITextFixed extends IText {
+        _calcTextareaPosition() {
+            return {
+                ...super._calcTextareaPosition(),
+                left: "0",
+                top: "0"
+            }
+        }
+    }
+
     function drawText() {
-        const text = new IText('Enter text', {
+        const text = new ITextFixed('Enter text', {
             left: maxDimension / 2 - maxDimension * 0.055,
             top: maxDimension / 2 - maxDimension * 0.055,
             fontFamily: 'Arial',
@@ -279,7 +290,7 @@
             borderScaleFactor: maxDimension * 0.006,
             transparentCorners: false,
             lockScalingFlip: true,
-            hiddenTextareaContainer: canvas.lowerCanvasEl
+            hiddenTextareaContainer: hiddenTextarea,
         })
         text.controls.mtr.offsetY = -0.0375 * maxDimension
 
@@ -542,7 +553,7 @@
                             {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
             </div>
             <canvas bind:this={canvasElement} class="k-w-full k-h-full"></canvas>
-            <div id="hiddenTextareaContainer" style="position: absolute; top: -4200px; opacity: 0"></div>
+            <div bind:this={hiddenTextarea} style="position: absolute; top: 0; left: 0"></div>
         </div>
 
         {#if warnings.length > 0}
