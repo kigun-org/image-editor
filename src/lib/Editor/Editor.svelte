@@ -291,6 +291,9 @@
             transparentCorners: false,
             lockScalingFlip: true,
             hiddenTextareaContainer: hiddenTextarea,
+            cursorWidth: maxDimension * 0.003,
+            selectionStart: 0,
+            selectionEnd: 10, // length of 'Enter text'
         })
         text.controls.mtr.offsetY = -0.0375 * maxDimension
 
@@ -298,6 +301,9 @@
 
         canvas.add(text)
         canvas.setActiveObject(text)
+
+        text.enterEditing()
+
         canvas.renderAll()
     }
 
