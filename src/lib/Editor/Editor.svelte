@@ -37,6 +37,8 @@
     let brightness = $state(1)
     let contrast = $state(0)
 
+    let color = $state("#ffff00")
+
     let markers = $state([])
     let activeMarker = $state()
     let hiddenTextarea = $state()
@@ -220,7 +222,7 @@
             top: maxDimension / 2 - 1.5 * unit,
             left: maxDimension / 2 - 4 * unit,
             inverted: true,
-            fill: 'yellow',
+            fill: color,
             cornerSize: maxDimension * 0.03,
             touchCornerSize: maxDimension * 0.06,
             borderScaleFactor: maxDimension * 0.006,
@@ -247,7 +249,7 @@
             top: maxDimension / 2 - maxDimension * 0.055,
             radius: maxDimension * 0.05,
             strokeWidth: maxDimension * 0.01,
-            stroke: 'yellow',
+            stroke: color,
             fill: 'transparent',
             cornerSize: maxDimension * 0.03,
             touchCornerSize: maxDimension * 0.06,
@@ -284,7 +286,7 @@
             fontFamily: 'Arial',
             fontSize: maxDimension * 0.07,
             fontWeight: 'bold',
-            fill: 'yellow',
+            fill: color,
             cornerSize: maxDimension * 0.03,
             touchCornerSize: maxDimension * 0.06,
             borderScaleFactor: maxDimension * 0.006,
@@ -364,6 +366,8 @@
 
         brightness = 1
         contrast = 0
+
+        color = "#ffff00"
 
         for (const marker of markers) {
             canvas.remove(marker)
@@ -582,9 +586,9 @@
         {/if}
     </div>
     <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
-        <Toolbar bind:activeMarker bind:brightness bind:contrast bind:flipH
-                 bind:flipV bind:keepAspectRatio bind:markers
+        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio
                  bind:rotation cropWarning={crop.warning}
+                 bind:color bind:activeMarker bind:markers
                  drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
                  deleteMarker={deleteSelectedMarker}
                  rotationEnd={handleRotationEnd} rotationStart={handleRotationStart}/>

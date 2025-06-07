@@ -11,6 +11,7 @@
         contrast: number;
         markers: any;
         activeMarker: any;
+        color: string;
         drawArrow: () => void;
         drawCircle: () => void;
         drawRect: () => void;
@@ -30,6 +31,7 @@
         contrast = $bindable(),
         markers = $bindable(),
         activeMarker = $bindable(),
+        color = $bindable(),
         drawArrow,
         drawCircle,
         drawRect,
@@ -98,17 +100,17 @@
             <span>Rotation ({rotation}&deg;)</span>
         </div>
 
-        <input class="k-range" max="180" min="-180" step="1" type="range"
-               bind:value={rotation}
-               onpointerdown={() => rotationStart()} onpointerup={() => rotationEnd()}/>
+        <input bind:value={rotation} class="k-range" max="180" min="-180" onpointerdown={() => rotationStart()}
+               onpointerup={() => rotationEnd()}
+               step="1" type="range"/>
     </div>
 
     <div>
         <div class="k-flex k-gap-3">
             <h3 class="k-text-lg k-font-bold mb-1">Crop</h3>
             <button aria-label="Warning" class="k-btn k-btn-warning k-btn-sm k-btn-square"
-                    title="Crop area extends beyond image"
-                class:k-invisible={!cropWarning}>
+                    class:k-invisible={!cropWarning}
+                    title="Crop area extends beyond image">
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -145,8 +147,8 @@
             </span>
         </div>
 
-        <input class="k-range" max="1.25" min="0.75" step="0.01" type="range"
-               bind:value={brightness} />
+        <input bind:value={brightness} class="k-range" max="1.25" min="0.75" step="0.01"
+               type="range"/>
 
         <div class="k-flex k-gap-2 k-justify-center">
             <svg fill="currentColor" height="24" viewBox="0 0 24 24"
@@ -158,8 +160,8 @@
             <small>({Math.round(contrast * 100)}%)</small>
         </div>
 
-        <input class="k-range" max="0.25" min="-0.25" step="0.01" type="range"
-               bind:value={contrast} />
+        <input bind:value={contrast} class="k-range" max="0.25" min="-0.25" step="0.01"
+               type="range"/>
     </div>
 
     <div>
@@ -188,15 +190,6 @@
                 </svg>
             </button>
 
-            <button aria-label="Rectangle marker" class="k-btn k-btn-square k-btn-outline"
-                    onclick={drawRect}>
-                <svg fill="currentColor" height="24" viewBox="0 0 24 24"
-                     width="24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M19 4h-14a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z"/>
-                </svg>
-            </button>
-
             <button aria-label="Text" class="k-btn k-btn-square k-btn-outline"
                     onclick={drawText}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
@@ -209,11 +202,24 @@
                     <path d="M21 12v7"/>
                 </svg>
             </button>
+
+            <button aria-label="Rectangle marker" class="k-btn k-btn-square k-btn-outline"
+                    onclick={drawRect}>
+                <svg fill="currentColor" height="24" viewBox="0 0 24 24"
+                     width="24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                    <path d="M19 4h-14a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z"/>
+                </svg>
+            </button>
         </div>
 
-        <div>
-            <button class="k-btn k-btn-error k-w-full" disabled={!markers.includes(activeMarker)}
-                    onclick={deleteMarker}>
+        <div class="k-flex k-justify-between k-gap-1 k-mb-1">
+            <div class="k-btn k-btn-square">
+                <input class="w-75 h-75" type="color" bind:value={color} />
+            </div>
+
+            <button aria-label="Delete" class="k-btn k-btn-error k-flex-grow"
+                    disabled={!markers.includes(activeMarker)} onclick={deleteMarker}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -224,7 +230,6 @@
                     <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
                     <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
                 </svg>
-                Delete
             </button>
         </div>
     </div>
