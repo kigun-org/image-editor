@@ -29,11 +29,11 @@
     "vitest": "^2.1.1"
   },
   "dependencies": {
-    "bootstrap": "^5.3.3",
-    "bootstrap-icons": "^1.11.3",
+    "bootstrap": "^5.3.6",
+    "bootstrap-icons": "^1.13.1",
     "canvas-size": "^2.0.0",
-    "fabric": "^6.5.4",
-    "fslightbox": "^3.4.2",
-    "pixi.js": "^8.7.3"
+    "fabric": "^6.7.0",
+    "fslightbox": "^3.6.1",
+    "pixi.js": "^8.10.1"
   }
 }
