@@ -1,8 +1,9 @@
 <script lang="ts">
-    import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect} from 'fabric'
+    import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect, PencilBrush} from 'fabric'
     import {onMount} from "svelte";
     import Background from "./Background.svelte";
     import Toolbar from "./Toolbar.svelte";
+    import {draw} from "svelte/transition";
 
     let {
         originalImageBlob,
@@ -38,6 +39,17 @@
     let contrast = $state(0)
 
     let color = $state("#ffff00")
+    let drawingMode = $state(false)
+    $effect(() => {
+        // Need this so that Svelte re-runs the code inside the condition on change
+        const brushColor = color
+        const canvasDrawingMode = drawingMode
+
+        if (canvas !== undefined) {
+            canvas.freeDrawingBrush.color = brushColor
+            canvas.isDrawingMode = canvasDrawingMode
+        }
+    })
 
     let markers = $state([])
     let activeMarker = $state()
@@ -216,6 +228,8 @@
     }
 
     function drawArrow() {
+        drawingMode = false
+
         const unit = maxDimension * 0.025
         const path = `M 0 0 l -${2 * unit} -${1.5 * unit} v ${unit} h -${2 * unit} v ${unit} h ${2 * unit} v ${unit} l ${2 * unit} -${1.5 * unit} Z`
         const arrow = new Path(path, {
@@ -244,6 +258,8 @@
     }
 
     function drawCircle() {
+        drawingMode = false
+
         const circle = new Circle({
             left: maxDimension / 2 - maxDimension * 0.055,
             top: maxDimension / 2 - maxDimension * 0.055,
@@ -280,6 +296,8 @@
     }
 
     function drawText() {
+        drawingMode = false
+
         const text = new ITextFixed('Enter text', {
             left: maxDimension / 2 - maxDimension * 0.055,
             top: maxDimension / 2 - maxDimension * 0.055,
@@ -310,6 +328,8 @@
     }
 
     function drawRect() {
+        drawingMode = false
+
         const rect = new Rect({
             left: maxDimension / 2 - maxDimension * 0.08,
             top: maxDimension / 2 - maxDimension * 0.04,
@@ -368,6 +388,8 @@
         contrast = 0
 
         color = "#ffff00"
+
+        drawingMode = false
 
         for (const marker of markers) {
             canvas.remove(marker)
@@ -444,6 +466,9 @@
         canvas.centerObject(imagePlaceholder)
 
         initCrop()
+
+        canvas.freeDrawingBrush = new PencilBrush(canvas)
+        canvas.freeDrawingBrush.width = maxDimension * 0.005
 
         canvas.setActiveObject(crop.rect)
         canvas.renderAll()
@@ -552,6 +577,22 @@
         canvas.on("selection:created", onSelectionUpdated)
         canvas.on("selection:updated", onSelectionUpdated)
         canvas.on("selection:cleared", onSelectionUpdated)
+
+        // Add created paths to marker list
+        canvas.on("path:created", function onPathCreated(ev) {
+            ev.path.cornerSize = maxDimension * 0.03
+            ev.path.touchCornerSize = maxDimension * 0.06
+            ev.path.borderScaleFactor = maxDimension * 0.006
+            ev.path.transparentCorners = false
+            ev.path.lockScalingFlip = true
+            ev.path.minScaleLimit = 0.5
+
+            ev.path.hasControls = false
+            ev.path.lockMovementX = true
+            ev.path.lockMovementY = true
+
+            markers.push(ev.path)
+        })
     })
 </script>
 
@@ -588,7 +629,7 @@
     <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
         <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio
                  bind:rotation cropWarning={crop.warning}
-                 bind:color bind:activeMarker bind:markers
+                 bind:color bind:activeMarker bind:markers bind:drawingMode
                  drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
                  deleteMarker={deleteSelectedMarker}
                  rotationEnd={handleRotationEnd} rotationStart={handleRotationStart}/>

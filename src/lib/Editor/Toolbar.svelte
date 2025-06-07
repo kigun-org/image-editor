@@ -16,6 +16,7 @@
         drawCircle: () => void;
         drawRect: () => void;
         drawText: () => void;
+        drawingMode: boolean;
         deleteMarker: () => void;
     }
 
@@ -36,6 +37,7 @@
         drawCircle,
         drawRect,
         drawText,
+        drawingMode = $bindable(),
         deleteMarker
     }: Props = $props();
 </script>
@@ -214,6 +216,17 @@
         </div>
 
         <div class="k-flex k-justify-between k-gap-1 k-mb-1">
+            <button aria-label="Draw" class="k-btn k-btn-square k-btn-outline"
+                    onclick={() => drawingMode = !drawingMode} class:k-btn-active={drawingMode}>
+                <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
+                     stroke="currentColor" stroke-linecap="round"
+                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                    <path d="M3 15c2 3 4 4 7 4s7 -3 7 -7s-3 -7 -6 -7s-5 1.5 -5 4s2 5 6 5s8.408 -2.453 10 -5"/>
+                </svg>
+            </button>
+
             <div class="k-btn k-btn-square">
                 <input class="w-75 h-75" type="color" bind:value={color} />
             </div>
