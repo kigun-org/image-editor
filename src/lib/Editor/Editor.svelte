@@ -1,9 +1,8 @@
 <script lang="ts">
     import {Canvas, Circle, Group, Image as FabricImage, IText, Line, Path, Rect, PencilBrush} from 'fabric'
-    import {onMount} from "svelte";
+    import {onMount, tick} from "svelte";
     import Background from "./Background.svelte";
     import Toolbar from "./Toolbar.svelte";
-    import {draw} from "svelte/transition";
 
     let {
         originalImageBlob,
@@ -28,7 +27,8 @@
         rect: undefined,
         background: undefined,
         grid: undefined,
-        warning: false
+        warning: false,
+        keepAspectRatio: true
     })
 
     let flipH = $state(false)
@@ -40,16 +40,6 @@
 
     let color = $state("#ffff00")
     let drawingMode = $state(false)
-    $effect(() => {
-        // Need this so that Svelte re-runs the code inside the condition on change
-        const brushColor = color
-        const canvasDrawingMode = drawingMode
-
-        if (canvas !== undefined) {
-            canvas.freeDrawingBrush.color = brushColor
-            canvas.isDrawingMode = canvasDrawingMode
-        }
-    })
 
     let markers = $state([])
     let activeMarker = $state()
@@ -85,40 +75,92 @@
         canvas.renderAll()
     }
 
-    $effect(() => {
-        if (canvas !== undefined) {
-            if (rotation > 180) {
-                rotation = -180 + rotation % 180
-            } else if (rotation < -180) {
-                rotation = 180 + rotation % 180
-            }
-            imagePlaceholder.rotate(rotation)
-            imagePlaceholder.setCoords()
+    // noinspection JSSuspiciousNameCombination
+    function rotateCW90() {
+        rotation += 90
 
-            if ((rotation > 45 && rotation < 135) || (rotation < -45 && rotation > -135)) {
-                crop.rect.rotate(90)
-            } else {
-                crop.rect.rotate(0)
-            }
-            crop.rect.setCoords()
-            updateCrop()
+        const top = crop.rect.top
+        const left = crop.rect.left
+        const width = crop.rect.width
+        const height = crop.rect.height
+        const scale = crop.rect.scaleX
+
+        crop.rect.top = left
+        crop.rect.left = maxDimension - Math.floor(height * scale) - top
+        crop.rect.width = height
+        crop.rect.height = width
+
+        crop.rect.setCoords()
+        updateCrop()
+    }
+
+    // noinspection JSSuspiciousNameCombination
+    function rotateCCW90() {
+        rotation -= 90
+
+        const top = crop.rect.top
+        const left = crop.rect.left
+        const width = crop.rect.width
+        const height = crop.rect.height
+        const scale = crop.rect.scaleX
+
+        crop.rect.top = maxDimension - Math.floor(width * scale) - left
+        crop.rect.left = top
+        crop.rect.width = height
+        crop.rect.height = width
+
+        crop.rect.setCoords()
+        updateCrop()
+    }
+
+    // When rotation changes, clamp it to [-180, 180]
+    // and rotate the crop rectangle if rotation passes 45 degrees
+    $effect(() => {
+        // Need this so that Svelte re-runs the code inside the condition on change
+        if (rotation > 180) {
+            rotation = -180 + rotation % 180
+        } else if (rotation < -180) {
+            rotation = 180 + rotation % 180
+        }
+
+        let imageRotation = rotation
+
+        if (canvas !== undefined) {
+            imagePlaceholder.rotate(imageRotation)
+            imagePlaceholder.setCoords()
 
             canvas.renderAll()
         }
     })
 
-    let keepAspectRatio = $state(true)
+    // Update resize controls when keep aspect ratio changes
     $effect(() => {
+        // Need this so that Svelte re-runs the code inside the condition on change
+        const showExtraControls = !crop.keepAspectRatio
+
         if (crop.rect !== undefined) {
             crop.rect.setControlsVisibility({
-                mt: !keepAspectRatio,
-                mr: !keepAspectRatio,
-                mb: !keepAspectRatio,
-                ml: !keepAspectRatio
+                mt: showExtraControls,
+                mr: showExtraControls,
+                mb: showExtraControls,
+                ml: showExtraControls
             })
             canvas.renderAll()
         }
     })
+
+    // Update drawing mode when button is pressed
+    $effect(() => {
+        // Need this so that Svelte re-runs the code inside the condition on change
+        const brushColor = color
+        const canvasDrawingMode = drawingMode
+
+        if (canvas !== undefined) {
+            canvas.freeDrawingBrush.color = brushColor
+            canvas.isDrawingMode = canvasDrawingMode
+        }
+    })
+
 
     function createCropRect(image) {
         const rect = new Rect({
@@ -161,8 +203,8 @@
     }
 
     function createGrid(image) {
-        const width = image.width
-        const height = image.height
+        const width = maxDimension
+        const height = maxDimension
 
         const lineProperties = {
             stroke: "rgba(255, 255, 255, 0.75)",
@@ -171,7 +213,7 @@
         }
 
         const gridLines = []
-        const gridSize = 3
+        const gridSize = 5
 
         for (let x = width / (gridSize + 1); x < width; x += width / (gridSize + 1)) {
             gridLines.push(new Line([x, 0, x, height], lineProperties))
@@ -181,7 +223,7 @@
             gridLines.push(new Line([0, y, width, y], lineProperties))
         }
 
-        return new Group(gridLines, {left: image.left, top: image.top, selectable: false, visible: false})
+        return new Group(gridLines, {left: 0, top: 0, selectable: false, visible: false})
     }
 
     function initCrop() {
@@ -197,34 +239,29 @@
     }
 
     function updateCrop() {
-        const boundingRect = crop.rect.getBoundingRect()
-        const path = `M ${boundingRect.left - 2} ${boundingRect.top - 2} h ${boundingRect.width + 4} v ${boundingRect.height + 4} h -${boundingRect.width + 4} Z`
-        crop.background.clipPath = new Path(path, {
-            absolutePositioned: true,
-            inverted: true
+        tick().then(() => {
+            const cropBoundingRect = crop.rect.getBoundingRect(true, true)
+
+            const path = `M ${cropBoundingRect.left - 2} ${cropBoundingRect.top - 2} h ${cropBoundingRect.width + 4} v ${cropBoundingRect.height + 4} h -${cropBoundingRect.width + 4} Z`
+            crop.background.clipPath = new Path(path, {
+                absolutePositioned: true,
+                inverted: true
+            })
+
+            // crop.grid.set({
+            //     top: crop.rect.top,
+            //     left: crop.rect.left,
+            //     width: crop.rect.width,
+            //     height: crop.rect.height,
+            //     scaleX: crop.rect.scaleX,
+            //     scaleY: crop.rect.scaleY,
+            // })
+            // crop.grid.setCoords()
+
+            crop.warning = !crop.rect.isContainedWithinObject(imagePlaceholder)
+
+            canvas.renderAll()
         })
-
-        crop.grid.set({
-            top: crop.rect.top,
-            left: crop.rect.left,
-            width: crop.rect.width,
-            height: crop.rect.height,
-            angle: crop.rect.angle,
-            scaleX: crop.rect.scaleX,
-            scaleY: crop.rect.scaleY,
-        })
-        crop.grid.setCoords()
-
-        const rectBoundingRect = crop.rect.getBoundingRect()
-        const imageBoundingRect = imagePlaceholder.getBoundingRect()
-        crop.warning = !(crop.rect.isContainedWithinObject(imagePlaceholder)
-            || ((imagePlaceholder.angle % 90 === 0)
-                && ((rectBoundingRect.top >= imageBoundingRect.top)
-                    && (rectBoundingRect.left >= imageBoundingRect.left)
-                    && (rectBoundingRect.left + rectBoundingRect.width <= imageBoundingRect.left + imageBoundingRect.width)
-                    && (rectBoundingRect.top + rectBoundingRect.height <= imageBoundingRect.top + imageBoundingRect.height))))
-
-        canvas.renderAll()
     }
 
     function drawArrow() {
@@ -358,19 +395,21 @@
     }
 
     function resetCrop() {
-        crop.rect.set({
-            left: imagePlaceholder.left,
-            top: imagePlaceholder.top,
-            width: imagePlaceholder.width,
-            height: imagePlaceholder.height,
-            angle: 0,
-            scaleX: 1,
-            scaleY: 1
+        tick().then(() => {
+            crop.rect.set({
+                left: imagePlaceholder.left,
+                top: imagePlaceholder.top,
+                width: imagePlaceholder.width,
+                height: imagePlaceholder.height,
+                angle: 0,
+                scaleX: 1,
+                scaleY: 1
+            })
+            crop.rect.lastGoodTop = imagePlaceholder.top
+            crop.rect.lastGoodLeft = imagePlaceholder.left
+            crop.rect.lastGoodScale = 1
+            crop.rect.setCoords()
         })
-        crop.rect.lastGoodTop = imagePlaceholder.top
-        crop.rect.lastGoodLeft = imagePlaceholder.left
-        crop.rect.lastGoodScale = 1
-        crop.rect.setCoords()
 
         updateCrop()
     }
@@ -378,17 +417,15 @@
     function reset() {
         flipH = false
         flipV = false
-
         rotation = 0
 
+        crop.keepAspectRatio = true
         resetCrop()
-        keepAspectRatio = true
 
         brightness = 1
         contrast = 0
 
         color = "#ffff00"
-
         drawingMode = false
 
         for (const marker of markers) {
@@ -464,6 +501,9 @@
 
         canvas.add(imagePlaceholder)
         canvas.centerObject(imagePlaceholder)
+
+        imagePlaceholder.left += 0.5
+        imagePlaceholder.top += 0.5
 
         initCrop()
 
@@ -627,12 +667,13 @@
         {/if}
     </div>
     <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
-        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio
-                 bind:rotation cropWarning={crop.warning}
+        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio={crop.keepAspectRatio}
+                 rotateCW90={rotateCW90} rotateCCW90={rotateCCW90}
+                 bind:rotation rotationEnd={handleRotationEnd} rotationStart={handleRotationStart}
+                 cropWarning={crop.warning}
                  bind:color bind:activeMarker bind:markers bind:drawingMode
                  drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
-                 deleteMarker={deleteSelectedMarker}
-                 rotationEnd={handleRotationEnd} rotationStart={handleRotationStart}/>
+                 deleteMarker={deleteSelectedMarker} />
 
         <div class="k-flex k-flex-col k-gap-2">
             <button class="k-btn k-w-full" onclick={reset}>

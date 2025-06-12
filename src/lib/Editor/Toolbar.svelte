@@ -5,6 +5,8 @@
         rotation: number;
         rotationStart: () => void;
         rotationEnd: () => void;
+        rotateCW90: () => void;
+        rotateCCW90: () => void;
         cropWarning: boolean;
         keepAspectRatio: boolean;
         brightness: number;
@@ -26,6 +28,8 @@
         rotation = $bindable(),
         rotationStart,
         rotationEnd,
+        rotateCW90,
+        rotateCCW90,
         cropWarning,
         keepAspectRatio = $bindable(),
         brightness = $bindable(),
@@ -72,7 +76,7 @@
             </button>
 
             <button aria-label="Rotate 90&deg; CW" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => rotation = rotation + 90}>
+                    onclick={rotateCW90}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +86,7 @@
             </button>
 
             <button aria-label="Rotate 90&deg; CCW" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => rotation = rotation - 90}>
+                    onclick={rotateCCW90}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -245,5 +249,21 @@
                 </svg>
             </button>
         </div>
+
+        {#if drawingMode}
+            <div class="k-mt-2">
+                Click the
+                <span class="k-inline-block">
+                    <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
+                         stroke="currentColor" stroke-linecap="round"
+                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                        <path d="M3 15c2 3 4 4 7 4s7 -3 7 -7s-3 -7 -6 -7s-5 1.5 -5 4s2 5 6 5s8.408 -2.453 10 -5"/>
+                    </svg>
+                </span>
+                button again to stop drawing.
+            </div>
+        {/if}
     </div>
 </div>
