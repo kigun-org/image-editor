@@ -66,12 +66,20 @@
     }
 
     function handleRotationStart() {
-        crop.grid.visible = true
+        // update coordinates for the crop grid
+        crop.grid = createGrid(crop.rect.getBoundingRect())
+        canvas.add(crop.grid)
+
         canvas.renderAll()
     }
 
     function handleRotationEnd() {
-        crop.grid.visible = false
+        canvas.remove(crop.grid)
+        crop.grid = undefined
+
+        // show the crop window is outside image warning
+        updateCrop()
+
         canvas.renderAll()
     }
 
@@ -202,18 +210,18 @@
         })
     }
 
-    function createGrid(image) {
-        const width = maxDimension
-        const height = maxDimension
+    function createGrid(dimensions) {
+        const width = dimensions.width
+        const height = dimensions.height
 
         const lineProperties = {
             stroke: "rgba(255, 255, 255, 0.75)",
-            strokeWidth: maxDimension * 0.001,
+            strokeWidth: maxDimension * 0.002,
             strokeDashArray: [maxDimension * 0.01, maxDimension * 0.01]
         }
 
         const gridLines = []
-        const gridSize = 5
+        const gridSize = 3
 
         for (let x = width / (gridSize + 1); x < width; x += width / (gridSize + 1)) {
             gridLines.push(new Line([x, 0, x, height], lineProperties))
@@ -223,40 +231,28 @@
             gridLines.push(new Line([0, y, width, y], lineProperties))
         }
 
-        return new Group(gridLines, {left: 0, top: 0, selectable: false, visible: false})
+        return new Group(gridLines, { left: dimensions.left, top: dimensions.top, selectable: false })
     }
 
     function initCrop() {
         crop.background = createCropBackground(canvas)
         crop.rect = createCropRect(imagePlaceholder)
-        crop.grid = createGrid(imagePlaceholder)
 
         canvas.add(crop.background)
         canvas.add(crop.rect)
-        canvas.add(crop.grid)
 
         updateCrop()
     }
 
     function updateCrop() {
         tick().then(() => {
-            const cropBoundingRect = crop.rect.getBoundingRect(true, true)
+            const cropBoundingRect = crop.rect.getBoundingRect()
 
             const path = `M ${cropBoundingRect.left - 2} ${cropBoundingRect.top - 2} h ${cropBoundingRect.width + 4} v ${cropBoundingRect.height + 4} h -${cropBoundingRect.width + 4} Z`
             crop.background.clipPath = new Path(path, {
                 absolutePositioned: true,
                 inverted: true
             })
-
-            // crop.grid.set({
-            //     top: crop.rect.top,
-            //     left: crop.rect.left,
-            //     width: crop.rect.width,
-            //     height: crop.rect.height,
-            //     scaleX: crop.rect.scaleX,
-            //     scaleY: crop.rect.scaleY,
-            // })
-            // crop.grid.setCoords()
 
             crop.warning = !crop.rect.isContainedWithinObject(imagePlaceholder)
 
