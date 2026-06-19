@@ -23,5 +23,5 @@ export default {
 
   important: '.image-editor',
 
-  prefix: "k-"
+  prefix: "ie-"
 } satisfies Config;

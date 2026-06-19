@@ -22,9 +22,9 @@
 </script>
 
 {#if caseImages}
-    <div class="k-flex k-flex-wrap k-justify-between k-gap-2 k-shadow-lg k-rounded-box k-p-2 k-mb-6">
-        <div class="k-flex k-gap-2 k-items-center">
-            <button class="k-btn k-btn-square k-btn-ghost"
+    <div class="ie-flex ie-flex-wrap ie-justify-between ie-gap-2 ie-shadow-lg ie-rounded-box ie-p-2 ie-mb-6">
+        <div class="ie-flex ie-gap-2 ie-items-center">
+            <button class="ie-btn ie-btn-square ie-btn-ghost"
                     aria-label="Close" onclick={cancel}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                      stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -33,14 +33,14 @@
                     <path d="M5 12l6 -6"/>
                 </svg>
             </button>
-            <div class="k-text-xl">Select an image</div>
+            <div class="ie-text-xl">Select an image</div>
         </div>
-        <div class="k-flex k-gap-2">
-            <button class="k-btn k-btn-primary" disabled={!selectedImage} onclick={selectImage}>
+        <div class="ie-flex ie-gap-2">
+            <button class="ie-btn ie-btn-primary" disabled={!selectedImage} onclick={selectImage}>
                 Edit before upload
             </button>
             {#if passthroughOriginal}
-                <button class="k-btn" disabled={!selectedImage} onclick={passthroughImage}>
+                <button class="ie-btn" disabled={!selectedImage} onclick={passthroughImage}>
                     Copy original
                 </button>
             {/if}
@@ -48,22 +48,22 @@
     </div>
 
     {#await caseImages}
-        <div class="k-flex k-flex-col k-items-center k-gap-6 k-mt-12">
-            <span class="k-text-xl">Loading images</span>
-            <span class="k-loading k-loading-spinner k-loading-lg"></span>
+        <div class="ie-flex ie-flex-col ie-items-center ie-gap-6 ie-mt-12">
+            <span class="ie-text-xl">Loading images</span>
+            <span class="ie-loading ie-loading-spinner ie-loading-lg"></span>
         </div>
     {:then result}
-        <div class="k-p-2">
+        <div class="ie-p-2">
             {#each result.visits as section}
                 <div>
-                    <div class="k-text-lg k-mb-2">{section.title}</div>
-                    <div class="k-flex k-gap-1.5 k-overflow-x-scroll lg:k-flex-wrap lg:k-overflow-x-auto k-shadow k-bg-base-200 k-p-2 k-my-2">
+                    <div class="ie-text-lg ie-mb-2">{section.title}</div>
+                    <div class="ie-flex ie-gap-1.5 ie-overflow-x-scroll lg:ie-flex-wrap lg:ie-overflow-x-auto ie-shadow ie-bg-base-200 ie-p-2 ie-my-2">
                         {#each section.images as image}
-                            <label class="k-relative k-shrink-0">
+                            <label class="ie-relative ie-shrink-0">
                                 <img class="thumbnail" src={image.thumbnail} alt={image.id}>
-                                <span class="k-absolute k-top-3 k-left-3">
-                                    <input type="radio" class="k-radio k-radio-primary"
-                                           class:k-bg-base-100={selectedImage !== image}
+                                <span class="ie-absolute ie-top-3 ie-left-3">
+                                    <input type="radio" class="ie-radio ie-radio-primary"
+                                           class:ie-bg-base-100={selectedImage !== image}
                                            name="selected" value={image} bind:group={selectedImage} />
                                 </span>
                             </label>
@@ -75,9 +75,9 @@
             {/each}
         </div>
     {:catch ex}
-        <div class="k-flex k-justify-center">
-            <div class="k-flex-shrink-1">
-                <div class="k-alert k-alert-error k-mt-6 k-mx-auto">
+        <div class="ie-flex ie-justify-center">
+            <div class="ie-flex-shrink-1">
+                <div class="ie-alert ie-alert-error ie-mt-6 ie-mx-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                          stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 9v4"/>

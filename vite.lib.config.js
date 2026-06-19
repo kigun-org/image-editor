@@ -8,18 +8,17 @@ export default defineConfig({
     publicDir: false,
     plugins: [svelte()],
     build: {
-        rollupOptions: {
+        cssCodeSplit: false,
+        rolldownOptions: {
             output: {
-                manualChunks: (_) => "common"
+                codeSplitting: false,
             }
         },
         lib: {
-            entry: [
-                resolve(__dirname, 'src/lib/ImageEditor.svelte'),
-            ],
+            entry: resolve(__dirname, 'src/lib/ImageEditor.svelte'),
             formats: ['es'],
-            fileName: (_, entryAlias) => `${entryAlias}.js`,
-            cssFileName: 'ImageEditor'
+            fileName: (_, entryAlias) => `image-editor.js`,
+            cssFileName: "image-editor"
         }
     }
 })

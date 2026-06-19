@@ -44,13 +44,13 @@
     }: Props = $props();
 </script>
 
-<div class="k-flex k-flex-col k-gap-5">
+<div class="ie-flex ie-flex-col ie-gap-5">
     <div>
-        <h3 class="k-text-lg k-font-bold k-mb-2">Orient</h3>
+        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Orient</h3>
 
-        <div class="k-flex k-justify-between k-gap-1 k-mb-2">
-            <button aria-label="Flip horizontal" class="k-btn k-btn-square k-btn-outline"
-                    class:k-btn-active={flipH} onclick={() => flipH = !flipH}>
+        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-2">
+            <button aria-label="Flip horizontal" class="ie-btn ie-btn-square ie-btn-outline"
+                    class:ie-btn-active={flipH} onclick={() => flipH = !flipH}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -61,8 +61,8 @@
                 </svg>
             </button>
 
-            <button aria-label="Flip vertical" class="k-btn k-btn-square k-btn-outline"
-                    class:k-btn-active={flipV} onclick={() => flipV = !flipV}>
+            <button aria-label="Flip vertical" class="ie-btn ie-btn-square ie-btn-outline"
+                    class:ie-btn-active={flipV} onclick={() => flipV = !flipV}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -73,7 +73,7 @@
                 </svg>
             </button>
 
-            <button aria-label="Rotate 90&deg; CW" class="k-btn k-btn-square k-btn-outline"
+            <button aria-label="Rotate 90&deg; CW" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={rotateCW90}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -83,7 +83,7 @@
                 </svg>
             </button>
 
-            <button aria-label="Rotate 90&deg; CCW" class="k-btn k-btn-square k-btn-outline"
+            <button aria-label="Rotate 90&deg; CCW" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={rotateCCW90}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -94,7 +94,7 @@
             </button>
         </div>
 
-        <div class="k-flex k-gap-2 k-justify-center">
+        <div class="ie-flex ie-gap-2 ie-justify-center">
             <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                  stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                  xmlns="http://www.w3.org/2000/svg">
@@ -104,15 +104,15 @@
             <span>Rotation ({rotation}&deg;)</span>
         </div>
 
-        <input bind:value={rotation} oninput={onrotationchange} class="k-range" max="180" min="-180"
+        <input bind:value={rotation} oninput={onrotationchange} class="ie-range" max="180" min="-180"
                step="1" type="range"/>
     </div>
 
     <div>
-        <div class="k-flex k-gap-3">
-            <h3 class="k-text-lg k-font-bold mb-1">Crop</h3>
-            <button aria-label="Warning" class="k-btn k-btn-warning k-btn-sm k-btn-square"
-                    class:k-invisible={!cropWarning}
+        <div class="ie-flex ie-gap-3">
+            <h3 class="ie-text-lg ie-font-bold mb-1">Crop</h3>
+            <button aria-label="Warning" class="ie-btn ie-btn-warning ie-btn-sm ie-btn-square"
+                    class:ie-invisible={!cropWarning}
                     title="Crop area extends beyond image">
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -125,18 +125,18 @@
             </button>
         </div>
 
-        <div class="k-form-control">
-            <label class="k-label k-cursor-pointer">
-                <span class="k-label-text">Keep aspect ratio</span>
-                <input bind:checked={keepAspectRatio} class="k-checkbox" type="checkbox"/>
+        <div class="ie-form-control">
+            <label class="ie-label ie-cursor-pointer">
+                <span class="ie-label-text">Keep aspect ratio</span>
+                <input bind:checked={keepAspectRatio} class="ie-checkbox" type="checkbox"/>
             </label>
         </div>
     </div>
 
     <div>
-        <h3 class="k-text-lg k-font-bold k-mb-2">Adjust</h3>
+        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Adjust</h3>
 
-        <div class="k-flex k-gap-2 k-justify-center">
+        <div class="ie-flex ie-gap-2 ie-justify-center">
             <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                  stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                  xmlns="http://www.w3.org/2000/svg">
@@ -150,10 +150,10 @@
             </span>
         </div>
 
-        <input bind:value={brightness} class="k-range" max="1.25" min="0.75" step="0.01"
+        <input bind:value={brightness} class="ie-range" max="1.25" min="0.75" step="0.01"
                type="range"/>
 
-        <div class="k-flex k-gap-2 k-justify-center">
+        <div class="ie-flex ie-gap-2 ie-justify-center">
             <svg fill="currentColor" height="24" viewBox="0 0 24 24"
                  width="24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
@@ -163,15 +163,15 @@
             <small>({Math.round(contrast * 100)}%)</small>
         </div>
 
-        <input bind:value={contrast} class="k-range" max="0.25" min="-0.25" step="0.01"
+        <input bind:value={contrast} class="ie-range" max="0.25" min="-0.25" step="0.01"
                type="range"/>
     </div>
 
     <div>
-        <h3 class="k-text-lg k-font-bold k-mb-2">Annotate</h3>
+        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Annotate</h3>
 
-        <div class="k-flex k-justify-between k-gap-1 k-mb-1">
-            <button aria-label="Arrow marker" class="k-btn k-btn-square k-btn-outline"
+        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-1">
+            <button aria-label="Arrow marker" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={drawArrow}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -183,7 +183,7 @@
                 </svg>
             </button>
 
-            <button aria-label="Circle marker" class="k-btn k-btn-square k-btn-outline"
+            <button aria-label="Circle marker" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={drawCircle}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -193,7 +193,7 @@
                 </svg>
             </button>
 
-            <button aria-label="Text" class="k-btn k-btn-square k-btn-outline"
+            <button aria-label="Text" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={drawText}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -206,7 +206,7 @@
                 </svg>
             </button>
 
-            <button aria-label="Rectangle marker" class="k-btn k-btn-square k-btn-outline"
+            <button aria-label="Rectangle marker" class="ie-btn ie-btn-square ie-btn-outline"
                     onclick={drawRect}>
                 <svg fill="currentColor" height="24" viewBox="0 0 24 24"
                      width="24" xmlns="http://www.w3.org/2000/svg">
@@ -216,9 +216,9 @@
             </button>
         </div>
 
-        <div class="k-flex k-justify-between k-gap-1 k-mb-1">
-            <button aria-label="Draw" class="k-btn k-btn-square k-btn-outline"
-                    onclick={() => drawingMode = !drawingMode} class:k-btn-active={drawingMode}>
+        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-1">
+            <button aria-label="Draw" class="ie-btn ie-btn-square ie-btn-outline"
+                    onclick={() => drawingMode = !drawingMode} class:ie-btn-active={drawingMode}>
                 <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
                      stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -228,11 +228,11 @@
                 </svg>
             </button>
 
-            <div class="k-btn k-btn-square">
+            <div class="ie-btn ie-btn-square">
                 <input class="w-75 h-75" type="color" bind:value={color} />
             </div>
 
-            <button aria-label="Delete" class="k-btn k-btn-error k-flex-grow"
+            <button aria-label="Delete" class="ie-btn ie-btn-error ie-flex-grow"
                     disabled={!markers.includes(activeMarker)} onclick={deleteMarker}>
                 <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                      stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
@@ -248,9 +248,9 @@
         </div>
 
         {#if drawingMode}
-            <div class="k-mt-2">
+            <div class="ie-mt-2">
                 Click the
-                <span class="k-inline-block">
+                <span class="ie-inline-block">
                     <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
                          stroke="currentColor" stroke-linecap="round"
                          stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"

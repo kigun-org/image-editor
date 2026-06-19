@@ -385,6 +385,11 @@
 
     export async function saveImage(backgroundCanvas) {
         return new Promise((resolve) => {
+            if (crop.grid) {
+                canvas.remove(crop.grid)
+                crop.grid = undefined
+            }
+
             canvas.discardActiveObject()
             canvas.renderAll()
 
@@ -572,5 +577,5 @@
     }
 </script>
 
-<canvas bind:this={canvasElement} class="k-w-full k-h-full"></canvas>
-<div bind:this={hiddenTextarea} class="k-absolute k-top-0 k-left-0"></div>
+<canvas bind:this={canvasElement} class="ie-w-full ie-h-full"></canvas>
+<div bind:this={hiddenTextarea} class="ie-absolute ie-top-0 ie-left-0"></div>

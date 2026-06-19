@@ -132,7 +132,7 @@
             const imageBlob = await foreground.saveImage(background.exportCanvas())
             await saveCallback(imageBlob)
         } catch (e) {
-            saveError = true
+            saveError = e
         } finally {
             saving = false
         }
@@ -149,12 +149,73 @@
     })
 </script>
 
-<div class="k-relative k-flex k-gap-3 k-flex-col md:k-flex-row">
+<div class="ie-relative ie-flex ie-gap-3 ie-flex-col md:ie-flex-row">
+    <div class="ie-flex-auto ie-aspect-square ie-relative">
+        <div class="ie-relative ie-aspect-square ie-flex ie-items-center ie-justify-center ie-mx-auto">
+            <div class="ie-absolute ie-w-full ie-h-full">
+                <Background bind:this={background} {brightness}
+                            {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
+            </div>
+            <Foreground bind:this={foreground} bind:crop {rotation} {markers} bind:activeMarker />
+        </div>
+
+        {#if warnings.length > 0}
+            <div class="ie-absolute ie-top-4 ie-left-4 ie-right-4 ie-flex ie-flex-col ie-gap-2">
+                {#each warnings as warning}
+                    <div class="ie-alert ie-alert-warning" role="alert">
+                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                            <path d="M12 9v4"/>
+                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
+                            <path d="M12 16h.01"/>
+                        </svg>
+                        <span>{warning}</span>
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    </div>
+    <div class="ie-flex-initial md:ie-w-52 ie-flex ie-flex-col ie-justify-between ie-gap-5">
+        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio={crop.keepAspectRatio}
+                 bind:rotation rotateCW90={rotateCW90} rotateCCW90={rotateCCW90} onrotationchange={rotationChanged}
+                 cropWarning={crop.warning}
+                 bind:color bind:activeMarker bind:markers bind:drawingMode
+                 drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
+                 deleteMarker={deleteSelectedMarker} />
+
+        <div class="ie-flex ie-flex-col ie-gap-4">
+            <button class="ie-btn ie-w-full" onclick={reset}>
+                Reset changes
+            </button>
+
+            <button class="ie-btn ie-w-full"
+                    class:ie-btn-danger={saveError !== undefined}
+                    class:ie-btn-primary={saveError === undefined}
+                    disabled={(saveError !== undefined) || saving}
+                    onclick={saveImage}>
+                {#if saving}
+                    <span class="ie-loading ie-loading-spinner"></span>
+                    Saving
+                {:else}
+                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
+                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+                        <path d="M5 12l5 5l10 -10"/>
+                    </svg>
+                    Save image
+                {/if}
+            </button>
+        </div>
+    </div>
+
     {#if saveError}
-        <div class="k-absolute k-bg-base-200/80 k-w-full k-h-full k-z-10 k-flex k-flex-col k-items-center k-justify-center">
-            <div class="k-card k-shadow-sm k-bg-base-100">
-                <div class="k-card-body">
-                    <div class="k-alert k-alert-error k-mb-4">
+        <div class="ie-absolute ie-bg-base-200/80 ie-w-full ie-h-full ie-z-1 ie-flex ie-flex-col ie-items-center ie-justify-center">
+            <div class="ie-card ie-shadow-sm ie-bg-base-100 ie-m-2">
+                <div class="ie-card-body">
+                    <div class="ie-alert ie-alert-error ie-mb-4">
                         <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
                              stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
                              xmlns="http://www.w3.org/2000/svg">
@@ -170,7 +231,7 @@
                         Please provide the original file and the following message when contacting support:
                     </div>
 
-                    <code class="k-text-sm k-bg-base-200 k-p-2">
+                    <code class="ie-text-sm ie-bg-base-200 ie-p-2">
                         [{new Date().toISOString()}]
                         [{window.location.pathname}]
                         {saveError}
@@ -181,66 +242,4 @@
             </div>
         </div>
     {/if}
-
-    <div class="k-flex-auto k-aspect-square k-relative">
-        <div class="k-relative k-aspect-square k-flex k-items-center k-justify-center k-mx-auto">
-            <div class="k-absolute k-w-full k-h-full">
-                <Background bind:this={background} {brightness}
-                            {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
-            </div>
-            <Foreground bind:this={foreground} bind:crop {rotation} {markers} bind:activeMarker />
-        </div>
-
-        {#if warnings.length > 0}
-            <div class="k-absolute k-top-4 k-left-4 k-right-4 k-flex k-flex-col k-gap-2">
-                {#each warnings as warning}
-                    <div class="k-alert k-alert-warning" role="alert">
-                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                            <path d="M12 9v4"/>
-                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
-                            <path d="M12 16h.01"/>
-                        </svg>
-                        <span>{warning}</span>
-                        <!--                    <button class="btn-close m-0" onclick={hideWarning}></button>-->
-                    </div>
-                {/each}
-            </div>
-        {/if}
-    </div>
-    <div class="k-flex-initial md:k-w-52 k-flex k-flex-col k-justify-between k-gap-5">
-        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio={crop.keepAspectRatio}
-                 bind:rotation rotateCW90={rotateCW90} rotateCCW90={rotateCCW90} onrotationchange={rotationChanged}
-                 cropWarning={crop.warning}
-                 bind:color bind:activeMarker bind:markers bind:drawingMode
-                 drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
-                 deleteMarker={deleteSelectedMarker} />
-
-        <div class="k-flex k-flex-col k-gap-4">
-            <button class="k-btn k-w-full" onclick={reset}>
-                Reset changes
-            </button>
-
-            <button class="k-btn k-w-full"
-                    class:k-btn-danger={saveError !== undefined}
-                    class:k-btn-primary={saveError === undefined}
-                    disabled={(saveError !== undefined) || saving}
-                    onclick={saveImage}>
-                {#if saving}
-                    <span class="k-loading k-loading-spinner"></span>
-                    Saving
-                {:else}
-                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                        <path d="M5 12l5 5l10 -10"/>
-                    </svg>
-                    Save image
-                {/if}
-            </button>
-        </div>
-    </div>
 </div>
