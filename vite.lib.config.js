@@ -17,7 +17,7 @@ export default defineConfig({
         lib: {
             entry: resolve(__dirname, 'src/lib/ImageEditor.svelte'),
             formats: ['es'],
-            fileName: (_, entryAlias) => `image-editor.js`,
+            fileName: () => `image-editor.js`,
             cssFileName: "image-editor"
         }
     }
