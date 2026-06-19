@@ -3,15 +3,14 @@
         flipH: boolean;
         flipV: boolean;
         rotation: number;
-        rotationStart: () => void;
-        rotationEnd: () => void;
         rotateCW90: () => void;
         rotateCCW90: () => void;
+        onrotationchange: () => void;
         cropWarning: boolean;
         keepAspectRatio: boolean;
         brightness: number;
         contrast: number;
-        markers: any;
+        markers: [];
         activeMarker: any;
         color: string;
         drawArrow: () => void;
@@ -26,10 +25,9 @@
         flipH = $bindable(),
         flipV = $bindable(),
         rotation = $bindable(),
-        rotationStart,
-        rotationEnd,
         rotateCW90,
         rotateCCW90,
+        onrotationchange,
         cropWarning,
         keepAspectRatio = $bindable(),
         brightness = $bindable(),
@@ -106,8 +104,7 @@
             <span>Rotation ({rotation}&deg;)</span>
         </div>
 
-        <input bind:value={rotation} class="k-range" max="180" min="-180" onpointerdown={() => rotationStart()}
-               onpointerup={() => rotationEnd()}
+        <input bind:value={rotation} oninput={onrotationchange} class="k-range" max="180" min="-180"
                step="1" type="range"/>
     </div>
 
