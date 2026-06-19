@@ -671,7 +671,7 @@
                  drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
                  deleteMarker={deleteSelectedMarker} />
 
-        <div class="k-flex k-flex-col k-gap-2">
+        <div class="k-flex k-flex-col k-gap-4">
             <button class="k-btn k-w-full" onclick={reset}>
                 Reset changes
             </button>

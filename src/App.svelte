@@ -1,6 +1,4 @@
 <script lang="ts">
-    import 'fslightbox'
-
     import ImageEditor from "./lib/ImageEditor.svelte";
 
     let imageSources = $state([])
@@ -8,7 +6,6 @@
     function saveCallback(blob) {
         return new Promise((resolve) => {
             imageSources.push(URL.createObjectURL(blob))
-            setTimeout(() => refreshFsLightbox(), 200)
             resolve()
         })
     }
@@ -35,7 +32,7 @@
     <h2 class="mt-5 text-center">Images</h2>
     <div class="screenshots d-flex flex-wrap gap-2">
         {#each imageSources as src}
-            <a href={src} data-fslightbox>
+            <a href={src} target="_blank">
                 <img src={src} alt="Screenshot" />
             </a>
         {/each}

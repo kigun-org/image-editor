@@ -171,7 +171,7 @@
     </div>
 
     <div>
-        <h3 class="k-text-lg k-font-bold k-mb-2">Markers</h3>
+        <h3 class="k-text-lg k-font-bold k-mb-2">Annotate</h3>
 
         <div class="k-flex k-justify-between k-gap-1 k-mb-1">
             <button aria-label="Arrow marker" class="k-btn k-btn-square k-btn-outline"
