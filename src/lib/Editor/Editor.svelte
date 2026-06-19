@@ -60,12 +60,10 @@
     }
 
     function rotateCW90() {
-        rotation += 90
         foreground.rotateCW90()
     }
 
     function rotateCCW90() {
-        rotation -= 90
         foreground.rotateCCW90()
     }
 
@@ -156,7 +154,7 @@
                 <Background bind:this={background} {brightness}
                             {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
             </div>
-            <Foreground bind:this={foreground} bind:crop {rotation} {markers} bind:activeMarker />
+            <Foreground bind:this={foreground} bind:crop bind:rotation bind:activeMarker {markers} />
         </div>
 
         {#if warnings.length > 0}

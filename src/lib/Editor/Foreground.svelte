@@ -1,10 +1,10 @@
 <script lang="ts">
     import {tick} from "svelte";
-    import {Canvas, Circle, FabricImage, Group, IText, Line, Path, PencilBrush, Rect} from "fabric";
+    import {Canvas, Circle, FabricImage, Group, IText, Path, PencilBrush, Point, Polyline, Rect} from "fabric";
 
     let {
         crop = $bindable(),
-        rotation,
+        rotation = $bindable(),
         markers,
         activeMarker = $bindable()
     } = $props();
@@ -27,18 +27,37 @@
         canvas.setActiveObject(crop.rect)
     }
 
+    function resetCrop() {
+        tick().then(() => {
+            crop.rect.set({
+                width: imagePlaceholder.width,
+                height: imagePlaceholder.height,
+                angle: 0,
+                scaleX: 1,
+                scaleY: 1
+            })
+            crop.rect.setPositionByOrigin(new Point(canvas.width / 2, canvas.height / 2), 'center', 'center')
+            crop.rect.setCoords()
+
+            crop.rect.lastGoodLeft = crop.rect.left
+            crop.rect.lastGoodTop = crop.rect.top
+            crop.rect.lastGoodScale = 1
+        })
+
+        updateCrop()
+    }
+
 
     export function rotateCW90() {
+        clearGrid()
         rotation += 90
 
         const top = crop.rect.top
         const left = crop.rect.left
         const width = crop.rect.width
         const height = crop.rect.height
-        const scale = crop.rect.scaleX
 
-        crop.rect.top = left
-        crop.rect.left = maxDimension - Math.floor(height * scale) - top
+        crop.rect.setPositionByOrigin(new Point(canvas.width - top, left), 'center', 'center')
         crop.rect.width = height
         crop.rect.height = width
 
@@ -47,16 +66,15 @@
     }
 
     export function rotateCCW90() {
+        clearGrid()
         rotation -= 90
 
         const top = crop.rect.top
         const left = crop.rect.left
         const width = crop.rect.width
         const height = crop.rect.height
-        const scale = crop.rect.scaleX
 
-        crop.rect.top = maxDimension - Math.floor(width * scale) - left
-        crop.rect.left = top
+        crop.rect.setPositionByOrigin(new Point(top, canvas.height - left), 'center', 'center')
         crop.rect.width = height
         crop.rect.height = width
 
@@ -65,10 +83,76 @@
     }
 
 
+    function initCrop() {
+        crop.background = createCropBackground(canvas)
+        crop.rect = createCropRect(imagePlaceholder)
+
+        canvas.add(crop.background)
+        canvas.add(crop.rect)
+
+        updateCrop()
+    }
+
+
+    function createCropBackground(image) {
+        const rect = new Rect({
+            width: image.width,
+            height: image.height,
+            fill: "rgba(0,0,0,0.6)",
+            selectable: false
+        })
+        rect.setPositionByOrigin(new Point(canvas.width / 2, canvas.height / 2), 'center', 'center')
+
+        return rect
+    }
+
+    function createCropRect(image) {
+        const rect = new Rect({
+            width: image.width,
+            height: image.height,
+            fill: 'transparent',
+            strokeWidth: 0,
+            minScaleLimit: 0.2,
+            lockScalingFlip: true,
+            cornerSize: maxDimension * 0.03,
+            touchCornerSize: maxDimension * 0.06,
+            borderScaleFactor: maxDimension * 0.006,
+            transparentCorners: false,
+        })
+        rect.setPositionByOrigin(new Point(canvas.width / 2, canvas.height / 2), 'center', 'center')
+
+        rect.setControlsVisibility({
+            mt: false,
+            mr: false,
+            mb: false,
+            ml: false,
+            mtr: false
+        })
+        rect.lastGoodLeft = rect.left
+        rect.lastGoodTop = rect.top
+        rect.lastGoodScale = 1
+
+        return rect
+    }
+
+    function updateCrop() {
+        tick().then(() => {
+            const cropBoundingRect = crop.rect.getBoundingRect()
+
+            const path = `M ${cropBoundingRect.left} ${cropBoundingRect.top} h ${cropBoundingRect.width + 4} v ${cropBoundingRect.height + 4} h -${cropBoundingRect.width + 4} Z`
+            crop.background.clipPath = new Path(path, {
+                absolutePositioned: true,
+                inverted: true
+            })
+
+            crop.warning = !crop.rect.isContainedWithinObject(imagePlaceholder)
+            canvas.renderAll()
+        })
+    }
 
     function createGrid(dimensions) {
-        const width = dimensions.width
-        const height = dimensions.height
+        const width = dimensions.width * dimensions.scaleX
+        const height = dimensions.height * dimensions.scaleY
 
         const lineProperties = {
             stroke: "rgba(255, 255, 255, 0.75)",
@@ -80,22 +164,32 @@
         const gridSize = 3
 
         for (let x = width / (gridSize + 1); x < width; x += width / (gridSize + 1)) {
-            gridLines.push(new Line([x, 0, x, height], lineProperties))
+            gridLines.push(new Polyline([{x, y: 0}, {x, y: height}], lineProperties))
         }
 
         for (let y = height / (gridSize + 1); y < height; y += height / (gridSize + 1)) {
-            gridLines.push(new Line([0, y, width, y], lineProperties))
+            gridLines.push(new Polyline([{x:0, y}, {x:width, y}], lineProperties))
         }
 
-        return new Group(gridLines, { left: dimensions.left, top: dimensions.top, selectable: false })
+        const group = new Group(gridLines, {selectable: false})
+        group.setPositionByOrigin(dimensions.getCenterPoint(), 'center', 'center')
+
+        return group
     }
 
     let rotationGridTimer
 
+    function clearGrid() {
+        if (crop.grid) {
+            canvas.remove(crop.grid)
+            crop.grid = undefined
+        }
+    }
+
     export function rotationChanged() {
         if (crop.grid === undefined) {
             // update coordinates for the crop grid
-            crop.grid = createGrid(crop.rect.getBoundingRect())
+            crop.grid = createGrid(crop.rect)
             canvas.add(crop.grid)
         }
 
@@ -106,11 +200,8 @@
 
         // start a new timer to hide grid (0.5s after last rotation)
         rotationGridTimer = setTimeout(() => {
-            canvas.remove(crop.grid)
-            crop.grid = undefined
-
+            clearGrid()
             canvas.renderAll()
-
             rotationGridTimer = undefined
         }, 1_000)
 
@@ -259,94 +350,6 @@
     }
 
 
-
-
-    function createCropRect(image) {
-        const rect = new Rect({
-            left: image.left,
-            top: image.top,
-            width: image.width,
-            height: image.height,
-            fill: 'transparent',
-            strokeWidth: 0,
-            minScaleLimit: 0.2,
-            lockScalingFlip: true,
-            cornerSize: maxDimension * 0.03,
-            touchCornerSize: maxDimension * 0.06,
-            borderScaleFactor: maxDimension * 0.006,
-            transparentCorners: false,
-        })
-        rect.setControlsVisibility({
-            mt: false,
-            mr: false,
-            mb: false,
-            ml: false,
-            mtr: false
-        })
-        rect.lastGoodTop = image.top
-        rect.lastGoodLeft = image.left
-        rect.lastGoodScale = 1
-
-        return rect
-    }
-
-    function createCropBackground(image) {
-        return new Rect({
-            top: image.top,
-            left: image.left,
-            width: image.width,
-            height: image.height,
-            fill: "rgba(0,0,0,0.6)",
-            selectable: false
-        })
-    }
-
-    function initCrop() {
-        crop.background = createCropBackground(canvas)
-        crop.rect = createCropRect(imagePlaceholder)
-
-        canvas.add(crop.background)
-        canvas.add(crop.rect)
-
-        updateCrop()
-    }
-
-    export function updateCrop() {
-        tick().then(() => {
-            const cropBoundingRect = crop.rect.getBoundingRect()
-
-            const path = `M ${cropBoundingRect.left - 2} ${cropBoundingRect.top - 2} h ${cropBoundingRect.width + 4} v ${cropBoundingRect.height + 4} h -${cropBoundingRect.width + 4} Z`
-            crop.background.clipPath = new Path(path, {
-                absolutePositioned: true,
-                inverted: true
-            })
-
-            crop.warning = !crop.rect.isContainedWithinObject(imagePlaceholder)
-            canvas.renderAll()
-        })
-    }
-
-    export function resetCrop() {
-        tick().then(() => {
-            crop.rect.set({
-                left: imagePlaceholder.left,
-                top: imagePlaceholder.top,
-                width: imagePlaceholder.width,
-                height: imagePlaceholder.height,
-                angle: 0,
-                scaleX: 1,
-                scaleY: 1
-            })
-            crop.rect.lastGoodTop = imagePlaceholder.top
-            crop.rect.lastGoodLeft = imagePlaceholder.left
-            crop.rect.lastGoodScale = 1
-            crop.rect.setCoords()
-        })
-
-        updateCrop()
-    }
-
-
     // When rotation changes, clamp it to [-180, 180]
     // and rotate the crop rectangle if rotation passes 45 degrees
     $effect(() => {
@@ -385,11 +388,7 @@
 
     export async function saveImage(backgroundCanvas) {
         return new Promise((resolve) => {
-            if (crop.grid) {
-                canvas.remove(crop.grid)
-                crop.grid = undefined
-            }
-
+            clearGrid()
             canvas.discardActiveObject()
             canvas.renderAll()
 
@@ -464,21 +463,23 @@
             if (obj === crop.rect) {
                 obj.setCoords()
 
+                const boundingRect = obj.getBoundingRect()
+
                 // top-left corner
-                if (obj.getBoundingRect().top < 0) {
+                if (boundingRect.top < 0) {
                     obj.top = obj.lastGoodTop
                 }
 
-                if (obj.getBoundingRect().left < 0) {
+                if (boundingRect.left < 0) {
                     obj.left = obj.lastGoodLeft
                 }
 
                 // bottom-right corner
-                if (obj.getBoundingRect().top + obj.getBoundingRect().height > canvas.height) {
+                if (boundingRect.top + boundingRect.height > canvas.height) {
                     obj.top = obj.lastGoodTop
                 }
 
-                if (obj.getBoundingRect().left + obj.getBoundingRect().width > canvas.width) {
+                if (boundingRect.left + boundingRect.width > canvas.width) {
                     obj.left = obj.lastGoodLeft
                 }
 
