@@ -76,6 +76,11 @@ To run the demo website:
 pnpm dev
 ```
 
+Playwright host tests:
+```
+pnpm test
+```
+
 The app should be running locally at: https://localhost:5173/.
 
 ## FAQ
