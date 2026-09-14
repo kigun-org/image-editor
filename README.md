@@ -20,10 +20,10 @@ npm install
 
 To build the JS component:
 ```
-npm run buildlib
+pnpm build
 ```
 
-The output should be 2 files, `ImageEditor.js` and `ImageEditor.css`,
+The output should be 2 files, `image-editor.js` and `image-editor.css`,
 which you can include in your website as shown below
 
 ## Using
@@ -71,14 +71,9 @@ The following options are supported:
 
 ### How to run locally
 
-To build the demo website:
+To run the demo website:
 ```
-npm run build
-```
-
-To test run the demo website locally:
-```
-npm run dev
+pnpm dev
 ```
 
 The app should be running locally at: https://localhost:5173/.
