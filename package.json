@@ -11,17 +11,20 @@
     "dev": "vite",
     "build": "vite build -c vite.lib.config.ts",
     "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./jsconfig.json",
     "test": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "autoprefixer": "^10.5.0",
     "daisyui": "^4.12.24",
-    "svelte": "^5.56.3",
+    "svelte": "^5.57.0",
+    "svelte-check": "^4.7.6",
     "tailwindcss": "^3.4.19",
     "tailwindcss-scoped-preflight": "^3.5.9",
-    "vite": "^8.0.16"
+    "typescript": "^6.0.3",
+    "vite": "8.3.0"
   },
   "dependencies": {
     "canvas-size": "^2.0.0",
