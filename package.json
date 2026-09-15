@@ -11,12 +11,13 @@
     "dev": "vite",
     "build": "vite build -c vite.lib.config.ts",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./jsconfig.json",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/node": "^22.20.2",
     "autoprefixer": "^10.5.0",
     "daisyui": "^4.12.24",
     "svelte": "^5.57.0",
