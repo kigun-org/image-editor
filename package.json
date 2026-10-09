@@ -5,31 +5,40 @@
   "type": "module",
   "packageManager": "pnpm@12.5.1",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build -c vite.lib.config.ts",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "test": "playwright test"
+    "test": "pnpm test:unit && pnpm test:browser && pnpm test:dist",
+    "test:unit": "playwright test -c playwright.unit.config.ts",
+    "test:browser": "playwright test -c playwright.config.ts",
+    "test:dist": "pnpm build && playwright test -c playwright.dist.config.ts",
+    "check:tests": "tsc --project tsconfig.tests.json --noEmit",
+    "check:size": "node scripts/check-size.mjs",
+    "check:deps": "node scripts/check-deps.mjs",
+    "test:perf": "playwright test -c playwright.perf.config.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "@types/node": "^22.20.2",
-    "autoprefixer": "^10.5.0",
-    "daisyui": "^4.12.24",
-    "svelte": "^5.57.0",
-    "svelte-check": "^4.7.6",
-    "tailwindcss": "^3.4.19",
-    "tailwindcss-scoped-preflight": "^3.5.9",
-    "typescript": "^6.0.3",
-    "vite": "8.3.0"
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.64.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.5",
+    "flyonui": "2.4.1",
+    "postcss": "8.5.29",
+    "postcss-selector-parser": "7.1.6",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
   },
   "dependencies": {
-    "canvas-size": "^2.0.0",
-    "fabric": "^7.4.0",
-    "pixi.js": "^8.19.0"
+    "@lucide/svelte": "1.52.0",
+    "fabric": "7.4.0",
+    "pixi.js": "8.22.0"
   }
 }

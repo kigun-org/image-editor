@@ -1,10 +1,10 @@
 <script lang="ts">
     import ImageEditor from "./lib/ImageEditor.svelte";
 
-    let imageSources = $state([])
+    let imageSources = $state<string[]>([])
     
-    function saveCallback(blob) {
-        return new Promise((resolve) => {
+    function saveCallback(blob: Blob) {
+        return new Promise<void>((resolve) => {
             imageSources.push(URL.createObjectURL(blob))
             resolve()
         })
@@ -13,7 +13,7 @@
     const validators = [
         {
             message: "Low resolution image. Upload the original high resolution image.",
-            test: (image) => Math.min(image.width, image.height) < 500
+            test: (image: HTMLImageElement) => Math.min(image.width, image.height) < 500
         },
         {
             message: "Image contains text. Use the draw tool to remove any patient personal details.",

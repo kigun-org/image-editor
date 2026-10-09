@@ -1,3 +1,110 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "./";
+@plugin "flyonui" {
+  themes: light --default;
+  root: ".image-editor";
+  include: button, input, select, range, checkbox, radio, alert, loading, textarea, label;
+  logs: false;
+}
+
+/* Establish a local baseline inside the shadow root. */
+.image-editor {
+  all: initial;
+  display: block;
+  direction: ltr;
+  unicode-bidi: normal;
+  isolation: isolate;
+  color-scheme: light;
+  font: 1rem/1.5 system-ui, sans-serif;
+  color: var(--color-base-content);
+  background: var(--color-base-100);
+  --color-base-100: #fff;
+  --color-base-200: #f3f4f6;
+  --color-base-300: #667085;
+  --color-base-content: #1f2937;
+  --color-primary: #3346b4;
+  --color-primary-content: #fff;
+  --color-error: #b42318;
+  --color-error-content: #fff;
+  /* Keep the default amber warning background with readable text and icons. */
+  --color-warning-content: #17202a;
+  --ie-ui-text: #17202a;
+  --ie-ui-border: #667085;
+  --ie-ui-focus: #075985;
+  --ie-ui-hover: #e5e7eb;
+  --ie-checker-light: #f3f4f6;
+  --ie-checker-dark: #d1d5db;
+  --ie-tooltip-background: #17202a;
+  --ie-tooltip-text: #fff;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-inset-shadow: 0 0 #0000;
+  --tw-inset-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow-alpha: 100%;
+}
+.image-editor[data-theme="dark"] {
+  color-scheme: dark;
+  --color-base-100: #111827;
+  --color-base-200: #1f2937;
+  --color-base-300: #9ca3af;
+  --color-base-content: #e5e7eb;
+  --color-primary: #a5b4fc;
+  --color-primary-content: #111827;
+  --color-error: #fca5a5;
+  --color-error-content: #450a0a;
+  --ie-ui-text: #e5e7eb;
+  --ie-ui-border: #9ca3af;
+  --ie-ui-focus: #93c5fd;
+  --ie-ui-hover: #374151;
+  --ie-checker-light: #374151;
+  --ie-checker-dark: #1f2937;
+  --ie-tooltip-background: #e5e7eb;
+  --ie-tooltip-text: #111827;
+}
+@media (prefers-color-scheme: dark) {
+  .image-editor[data-theme="system"] {
+    color-scheme: dark;
+    --color-base-100: #111827;
+    --color-base-200: #1f2937;
+    --color-base-300: #9ca3af;
+    --color-base-content: #e5e7eb;
+    --color-primary: #a5b4fc;
+    --color-primary-content: #111827;
+    --color-error: #fca5a5;
+    --color-error-content: #450a0a;
+    --ie-ui-text: #e5e7eb;
+    --ie-ui-border: #9ca3af;
+    --ie-ui-focus: #93c5fd;
+    --ie-ui-hover: #374151;
+    --ie-checker-light: #374151;
+    --ie-checker-dark: #1f2937;
+    --ie-tooltip-background: #e5e7eb;
+    --ie-tooltip-text: #111827;
+  }
+}
+.image-editor, .image-editor *, .image-editor *::before, .image-editor *::after { box-sizing: border-box; }
+.image-editor :where(button, input, select, textarea) { font: inherit; letter-spacing: inherit; margin: 0; }
+.image-editor :where(button, input:not([type="checkbox"]):not([type="radio"]), select, textarea) { max-width: 100%; }
+.image-editor :is(.btn, .input, .select, .range, button, input, select, textarea):focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
+.image-editor :where(button, select, input:not([type="checkbox"]):not([type="radio"])) { min-height: 44px; }
+.image-editor :where(button) { min-width: 44px; }
+/* Solid button backgrounds keep text contrast measurable in every state. */
+.image-editor .btn { background-image: none; }
+.image-editor .btn-outline { color: var(--color-base-content); background-color: var(--color-base-100); }
+.image-editor .btn-outline:hover { background-color: var(--ie-ui-hover); }
+.image-editor select.select { appearance: auto; background-image: none; }
+.image-editor :where(button:disabled, input:disabled, select:disabled) { cursor: not-allowed; }
+.image-editor [hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .image-editor *, .image-editor *::before, .image-editor *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .image-editor[data-theme] { color: CanvasText; background: Canvas; --color-base-100: Canvas; --color-base-content: CanvasText; --ie-ui-text: CanvasText; --ie-ui-border: ButtonText; --ie-ui-focus: Highlight; }
+  .image-editor :where(button, input, select, textarea) { border: 1px solid ButtonText; }
+  .image-editor :is(.btn, .input, .select, .range, button, input, select, textarea):focus-visible { outline-color: Highlight; }
+}

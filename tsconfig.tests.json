@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "checkJs": false, "types": ["node", "@playwright/test"] },
+  "include": ["tests/**/*.ts", "playwright*.ts", "vite.test.config.ts", "src/**/*.d.ts"]
+}

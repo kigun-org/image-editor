@@ -1,266 +1,124 @@
 <script lang="ts">
+    import type { EditorSnapshot } from '../types';
+    import IconButton from './IconButton.svelte';
+    import FlipHorizontal from '@lucide/svelte/icons/flip-horizontal';
+    import FlipVertical from '@lucide/svelte/icons/flip-vertical';
+    import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+    import RotateCw from '@lucide/svelte/icons/rotate-cw';
+    import MoveUpRight from '@lucide/svelte/icons/move-up-right';
+    import Circle from '@lucide/svelte/icons/circle';
+    import RectangleHorizontal from '@lucide/svelte/icons/rectangle-horizontal';
+    import Type from '@lucide/svelte/icons/type';
+    import Pencil from '@lucide/svelte/icons/pencil';
+    import SendToBack from '@lucide/svelte/icons/send-to-back';
+    import BringToFront from '@lucide/svelte/icons/bring-to-front';
+    import Trash2 from '@lucide/svelte/icons/trash-2';
+    import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+
     interface Props {
-        flipH: boolean;
-        flipV: boolean;
+        disabled: boolean;
+        snapshot: EditorSnapshot;
         rotation: number;
-        rotateCW90: () => void;
-        rotateCCW90: () => void;
-        onrotationchange: () => void;
-        cropWarning: boolean;
-        keepAspectRatio: boolean;
         brightness: number;
         contrast: number;
-        markers: [];
-        activeMarker: any;
+        flipH: boolean;
+        flipV: boolean;
+        keepAspectRatio: boolean;
         color: string;
-        drawArrow: () => void;
-        drawCircle: () => void;
-        drawRect: () => void;
-        drawText: () => void;
         drawingMode: boolean;
-        deleteMarker: () => void;
+        onorientation: (action: 'flipH' | 'flipV' | 'cw' | 'ccw') => void;
+        onadjust: (name: 'rotation' | 'brightness' | 'contrast', value: number) => void;
+        onaspect: (value: boolean) => void;
+        oncolor: (value: string) => void;
+        ondraw: (type: 'arrow' | 'circle' | 'rectangle' | 'text' | 'freehand') => void;
+        ondelete: (id: string) => void;
+        onorder: (id: string, direction: 'forward' | 'backward') => void;
     }
+    let { disabled, snapshot, rotation, brightness, contrast, flipH, flipV,
+        keepAspectRatio, color, drawingMode, onorientation, onadjust, onaspect,
+        oncolor, ondraw, ondelete, onorder }: Props = $props();
+    const uid = $props.id();
+    const selected = $derived(snapshot.annotations.find((item) => item.id === snapshot.selectedId));
 
-    let {
-        flipH = $bindable(),
-        flipV = $bindable(),
-        rotation = $bindable(),
-        rotateCW90,
-        rotateCCW90,
-        onrotationchange,
-        cropWarning,
-        keepAspectRatio = $bindable(),
-        brightness = $bindable(),
-        contrast = $bindable(),
-        markers = $bindable(),
-        activeMarker = $bindable(),
-        color = $bindable(),
-        drawArrow,
-        drawCircle,
-        drawRect,
-        drawText,
-        drawingMode = $bindable(),
-        deleteMarker
-    }: Props = $props();
 </script>
 
-<div class="ie-flex ie-flex-col ie-gap-5">
-    <div>
-        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Orient</h3>
-
-        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-2">
-            <button aria-label="Flip horizontal" class="ie-btn ie-btn-square ie-btn-outline"
-                    class:ie-btn-active={flipH} onclick={() => flipH = !flipH}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M12 3l0 18"/>
-                    <path d="M16 7l0 10l5 0l-5 -10"/>
-                    <path d="M8 7l0 10l-5 0l5 -10"/>
-                </svg>
-            </button>
-
-            <button aria-label="Flip vertical" class="ie-btn ie-btn-square ie-btn-outline"
-                    class:ie-btn-active={flipV} onclick={() => flipV = !flipV}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M3 12l18 0"/>
-                    <path d="M7 16l10 0l-10 5l0 -5"/>
-                    <path d="M7 8l10 0l-10 -5l0 5"/>
-                </svg>
-            </button>
-
-            <button aria-label="Rotate 90&deg; CW" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={rotateCW90}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M4.05 11a8 8 0 1 1 .5 4m-.5 5v-5h5"/>
-                </svg>
-            </button>
-
-            <button aria-label="Rotate 90&deg; CCW" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={rotateCCW90}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5"/>
-                </svg>
-            </button>
+<fieldset class="ie-controls" {disabled} aria-label="Image editing controls">
+    <fieldset>
+        <legend>Orient</legend>
+        <div class="ie-button-row">
+            <IconButton {disabled} icon={FlipHorizontal} label="Flip horizontal" pressed={flipH} onclick={() => onorientation('flipH')} />
+            <IconButton {disabled} icon={FlipVertical} label="Flip vertical" pressed={flipV} onclick={() => onorientation('flipV')} />
+            <IconButton {disabled} icon={RotateCcw} label="Rotate left 90°" onclick={() => onorientation('ccw')} />
+            <IconButton {disabled} icon={RotateCw} label="Rotate right 90°" onclick={() => onorientation('cw')} />
         </div>
-
-        <div class="ie-flex ie-gap-2 ie-justify-center">
-            <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                 stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                <path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5"/>
-            </svg>
-            <span>Rotation ({rotation}&deg;)</span>
+        <label for={`${uid}-rotation`}>Rotation: {rotation}°</label>
+        <input id={`${uid}-rotation`} class="range" type="range" min="-180" max="180" step="1" value={rotation}
+            aria-valuetext={`${rotation} degrees`} oninput={(event) => onadjust('rotation', event.currentTarget.valueAsNumber)} />
+    </fieldset>
+    <fieldset>
+        <legend class="ie-crop-title">Crop{#if snapshot.crop.warning}<TriangleAlert size={20} class="ie-crop-warning" role="img" aria-label="Crop extends outside the image" />{/if}</legend>
+        <label class="ie-check"><input class="checkbox" type="checkbox" checked={keepAspectRatio} onchange={(event) => onaspect(event.currentTarget.checked)} /> Keep aspect ratio</label>
+    </fieldset>
+    <fieldset>
+        <legend>Adjust</legend>
+        <label for={`${uid}-brightness`}>Brightness: {Math.round((brightness - 1) * 100)}%</label>
+        <input id={`${uid}-brightness`} class="range" type="range" min="0.75" max="1.25" step="0.01" value={brightness}
+            aria-valuetext={`${Math.round((brightness - 1) * 100)} percent`} oninput={(event) => onadjust('brightness', event.currentTarget.valueAsNumber)} />
+        <label for={`${uid}-contrast`}>Contrast: {Math.round(contrast * 100)}%</label>
+        <input id={`${uid}-contrast`} class="range" type="range" min="-0.25" max="0.25" step="0.01" value={contrast}
+            aria-valuetext={`${Math.round(contrast * 100)} percent`} oninput={(event) => onadjust('contrast', event.currentTarget.valueAsNumber)} />
+    </fieldset>
+    <fieldset>
+        <legend>Annotate</legend>
+        <div class="ie-button-row">
+            <IconButton {disabled} icon={MoveUpRight} label="Add arrow" onclick={() => ondraw('arrow')} />
+            <IconButton {disabled} icon={Circle} label="Add circle" onclick={() => ondraw('circle')} />
+            <IconButton {disabled} icon={RectangleHorizontal} filled label="Add rectangle" onclick={() => ondraw('rectangle')} />
+            <IconButton {disabled} icon={Type} label="Add text" onclick={() => ondraw('text')} />
+            <IconButton {disabled} icon={Pencil} label="Draw freehand" pressed={drawingMode} onclick={() => ondraw('freehand')} />
+            <label class="ie-new-color"><span class="ie-sr-only">Annotation color</span><input class="input" type="color" title="Annotation color" value={color} oninput={(event) => oncolor(event.currentTarget.value)} /></label>
         </div>
-
-        <input bind:value={rotation} oninput={onrotationchange} class="ie-range" max="180" min="-180"
-               step="1" type="range"/>
-    </div>
-
-    <div>
-        <div class="ie-flex ie-gap-3">
-            <h3 class="ie-text-lg ie-font-bold mb-1">Crop</h3>
-            <button aria-label="Warning" class="ie-btn ie-btn-warning ie-btn-sm ie-btn-square"
-                    class:ie-invisible={!cropWarning}
-                    title="Crop area extends beyond image">
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M12 9v4"/>
-                    <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
-                    <path d="M12 16h.01"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="ie-form-control">
-            <label class="ie-label ie-cursor-pointer">
-                <span class="ie-label-text">Keep aspect ratio</span>
-                <input bind:checked={keepAspectRatio} class="ie-checkbox" type="checkbox"/>
-            </label>
-        </div>
-    </div>
-
-    <div>
-        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Adjust</h3>
-
-        <div class="ie-flex ie-gap-2 ie-justify-center">
-            <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                 stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
-                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/>
-            </svg>
-            <span>
-                Brightness
-                <small>({Math.round((brightness - 1) * 100)}%)</small>
-            </span>
-        </div>
-
-        <input bind:value={brightness} class="ie-range" max="1.25" min="0.75" step="0.01"
-               type="range"/>
-
-        <div class="ie-flex ie-gap-2 ie-justify-center">
-            <svg fill="currentColor" height="24" viewBox="0 0 24 24"
-                 width="24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                <path d="M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-9 1.732a8 8 0 0 0 4.001 14.928l-.001 -16a8 8 0 0 0 -4 1.072"/>
-            </svg>
-            Contrast
-            <small>({Math.round(contrast * 100)}%)</small>
-        </div>
-
-        <input bind:value={contrast} class="ie-range" max="0.25" min="-0.25" step="0.01"
-               type="range"/>
-    </div>
-
-    <div>
-        <h3 class="ie-text-lg ie-font-bold ie-mb-2">Annotate</h3>
-
-        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-1">
-            <button aria-label="Arrow marker" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={drawArrow}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M5 12l14 0"/>
-                    <path d="M15 16l4 -4"/>
-                    <path d="M15 8l4 4"/>
-                </svg>
-            </button>
-
-            <button aria-label="Circle marker" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={drawCircle}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
-                </svg>
-            </button>
-
-            <button aria-label="Text" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={drawText}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M17.5 15.5m-3.5 0a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0"/>
-                    <path d="M3 19v-10.5a3.5 3.5 0 0 1 7 0v10.5"/>
-                    <path d="M3 13h7"/>
-                    <path d="M21 12v7"/>
-                </svg>
-            </button>
-
-            <button aria-label="Rectangle marker" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={drawRect}>
-                <svg fill="currentColor" height="24" viewBox="0 0 24 24"
-                     width="24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M19 4h-14a3 3 0 0 0 -3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3 -3v-10a3 3 0 0 0 -3 -3z"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="ie-flex ie-justify-between ie-gap-1 ie-mb-1">
-            <button aria-label="Draw" class="ie-btn ie-btn-square ie-btn-outline"
-                    onclick={() => drawingMode = !drawingMode} class:ie-btn-active={drawingMode}>
-                <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
-                     stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M3 15c2 3 4 4 7 4s7 -3 7 -7s-3 -7 -6 -7s-5 1.5 -5 4s2 5 6 5s8.408 -2.453 10 -5"/>
-                </svg>
-            </button>
-
-            <div class="ie-btn ie-btn-square">
-                <input class="w-75 h-75" type="color" bind:value={color} />
+        <div class="ie-annotation-details">
+            <p class:ie-hidden={!drawingMode} aria-hidden={!drawingMode}>Draw on the image. Press Escape or select Draw freehand again to stop.</p>
+            <div class="ie-button-row ie-selected-actions" class:ie-hidden={!selected} inert={!selected}>
+                <IconButton disabled={disabled || !selected} icon={SendToBack} label="Send backward" onclick={() => selected && onorder(selected.id, 'backward')} />
+                <IconButton disabled={disabled || !selected} icon={BringToFront} label="Bring forward" onclick={() => selected && onorder(selected.id, 'forward')} />
+                <div class="ie-delete-action"><IconButton disabled={disabled || !selected} icon={Trash2} label="Delete annotation" danger onclick={() => selected && ondelete(selected.id)} /></div>
             </div>
-
-            <button aria-label="Delete" class="ie-btn ie-btn-error ie-flex-grow"
-                    disabled={!markers.includes(activeMarker)} onclick={deleteMarker}>
-                <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                     stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                     xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                    <path d="M4 7l16 0"/>
-                    <path d="M10 11l0 6"/>
-                    <path d="M14 11l0 6"/>
-                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
-                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
-                </svg>
-            </button>
         </div>
+    </fieldset>
+</fieldset>
 
-        {#if drawingMode}
-            <div class="ie-mt-2">
-                Click the
-                <span class="ie-inline-block">
-                    <svg class="icon icon-tabler icons-tabler-outline icon-tabler-scribble" fill="none" height="24"
-                         stroke="currentColor" stroke-linecap="round"
-                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                        <path d="M3 15c2 3 4 4 7 4s7 -3 7 -7s-3 -7 -6 -7s-5 1.5 -5 4s2 5 6 5s8.408 -2.453 10 -5"/>
-                    </svg>
-                </span>
-                button again to stop drawing.
-            </div>
-        {/if}
-    </div>
-</div>
+<style>
+    .ie-controls { display: grid; gap: 1.25rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+    fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+    legend { font-size: 1.125rem; font-weight: 700; margin-bottom: .5rem; }
+    .ie-crop-title { display: flex; align-items: center; gap: .5rem; }
+    .ie-crop-title :global(.ie-crop-warning) { color: #17202a; fill: var(--ie-color-warning, #f59e0b); }
+    label { display: grid; gap: .25rem; margin-top: .5rem; font-size: .9375rem; }
+    p { font-size: .875rem; line-height: 1.5; margin: .5rem 0; }
+    .ie-button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+    .ie-annotation-details { display: grid; margin-top: 1rem; }
+    .ie-annotation-details > :is(p, .ie-selected-actions) { grid-area: 1 / 1; margin: 0; }
+    .ie-delete-action { display: flex; margin-left: auto; }
+    .ie-hidden { visibility: hidden; }
+    input { min-width: 0; width: 100%; }
+    input:not([type='range']):not([type='checkbox']) { min-height: 44px; }
+    .ie-check { display: flex; align-items: center; min-height: 44px; gap: .5rem; }
+    .ie-check input { width: 1.5rem; flex-shrink: 0; }
+    .ie-new-color { display: flex; align-items: center; flex: 0 0 44px; margin: 0 0 0 auto; }
+    .ie-new-color input { width: 44px; height: 44px; padding: .25rem; cursor: pointer; }
+    .ie-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    input[type='range'] { min-height: 44px; }
+    .ie-controls :is(.input, .checkbox) { border: 1px solid var(--ie-ui-border); }
+    input:focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
+    @media (hover: none), (pointer: coarse) { .ie-delete-action { flex: 0 0 5.5rem; } }
+    @container (max-width:479px) {
+        .ie-button-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .ie-button-row :global(.ie-icon-action) { min-width: 0; width: 100%; }
+        .ie-button-row :global(.ie-icon-button) { width: 100%; }
+        .ie-delete-action { margin-left: 0; }
+        .ie-new-color { margin-left: 0; }
+    }
+    @media (forced-colors: active) { input:focus-visible { outline-color: Highlight; } .ie-controls :is(.input, .checkbox) { border-color: ButtonText; } .ie-controls .range::-webkit-slider-runnable-track { background: ButtonText; } .ie-controls .range::-moz-range-track { background: ButtonText; } }
+</style>

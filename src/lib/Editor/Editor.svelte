@@ -1,243 +1,243 @@
 <script lang="ts">
-    import {onMount, tick} from "svelte";
-    import Background from "./Background.svelte";
-    import Toolbar from "./Toolbar.svelte";
-    import Foreground from "./Foreground.svelte";
+    import { onMount, onDestroy, tick } from 'svelte';
+    import Background from './Background.svelte';
+    import Foreground from './Foreground.svelte';
+    import Toolbar from './Toolbar.svelte';
+    import WarningAlert from './WarningAlert.svelte';
+    import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+    import Save from '@lucide/svelte/icons/save';
+    import type { ErrorNotice, PreparedImage, EditorSnapshot, AnnotationSnapshot, SaveCallback } from '../types';
 
-    let {
-        originalImageBlob,
-        validators,
-        saveCallback
-    } = $props()
-
-    let warnings = $state([])
-
-    let saving = $state(false)
-    let saveError = $state()
-
-    let background = $state()
-    let foreground = $state()
-
-    let crop = $state({
-        rect: undefined,
-        background: undefined,
-        grid: undefined,
-        warning: false,
-        keepAspectRatio: true
-    })
-
-    let flipH = $state(false)
-    let flipV = $state(false)
-    let rotation = $state(0)
-
-    let brightness = $state(1)
-    let contrast = $state(0)
-
-    let color = $state("#ffff00")
-    let drawingMode = $state(false)
-
-    let markers = $state([])
-    let activeMarker = $state()
-
-    function validate(originalImageBlob, validators) {
-        const imageDataURL = (window.URL || window.webkitURL).createObjectURL(originalImageBlob)
-        const testImage = new Image()
-
-        testImage.onload = () => {
-            warnings = []
-            for (const validator of validators) {
-                if (validator.test(testImage)) {
-                    warnings = [...warnings, validator.message]
-                }
-            }
-        }
-
-        testImage.src = imageDataURL
+    interface Props { preparedImage: PreparedImage; saveCallback: SaveCallback; onready?: () => void; onbusy?: (busy: boolean) => void; onretry?: () => void; onerror?: (notice: ErrorNotice | undefined) => void; }
+    let { preparedImage, saveCallback, onready, onbusy, onretry, onerror }: Props = $props();
+    interface BackgroundAPI { exportCanvas: () => HTMLCanvasElement; flush: () => void; }
+    interface ForegroundAPI {
+        init: (size: {width: number; height: number}) => void | Promise<void>;
+        saveImage: (background: HTMLCanvasElement) => Promise<Blob>;
+        reset: () => void;
+        setRotation: (angle: number) => void;
+        setKeepAspectRatio: (value: boolean) => void;
+        setInteractive: (value: boolean) => void;
+        rotateCW90: () => void; rotateCCW90: () => void;
+        drawArrow: (color: string) => void; drawCircle: (color: string) => void;
+        drawRect: (color: string) => void; drawText: (color: string) => void;
+        startDrawing: (color: string) => void; endDrawing: () => void;
+        updateAnnotation: (id: string, change: Partial<AnnotationSnapshot>) => void;
+        deleteMarker: (id: string) => void;
+        moveAnnotation: (id: string, direction: 'forward' | 'backward') => void;
     }
-
-    function rotationChanged() {
-        foreground.rotationChanged()
+    let editorRoot: HTMLElement;
+    let saveButton: HTMLButtonElement;
+    let preview: HTMLDivElement;
+    let dismissedWarnings = $state<number[]>([]);
+    let cropWarningDismissed = $state(false);
+    $effect(() => { if (!snapshot.crop.warning) cropWarningDismissed = false; });
+    function dismissWarning(index?: number) {
+        if (index === undefined) cropWarningDismissed = true;
+        else dismissedWarnings = [...dismissedWarnings, index];
+        void tick().then(() => { if (!disposed) preview?.focus(); });
     }
+    let background: BackgroundAPI | undefined = $state();
+    let foreground: ForegroundAPI | undefined = $state();
+    let snapshot: EditorSnapshot = $state({crop: {x: 0, y: 0, width: 1, height: 1, warning: false}, annotations: [], selectedId: undefined});
+    let rotation = $state(0);
+    let brightness = $state(1);
+    let contrast = $state(0);
+    let flipH = $state(false);
+    let flipV = $state(false);
+    let keepAspectRatio = $state(true);
+    let color = $state('#ffff00');
+    let drawingMode = $state(false);
+    let saving = $state(false);
+    let saveError = $state(false);
+    let initializationError = $state(false);
+    let foregroundReady = $state(false);
+    let backgroundReady = $state(false);
+    let saved = $state(false);
+    const ready = $derived(foregroundReady && backgroundReady && !initializationError);
+    const disabled = $derived(!ready || saving);
+    let retryBlob: Blob | undefined;
+    let disposed = false;
+    let announcedReady = false;
+    const uid = $props.id();
 
-    function rotateCW90() {
-        foreground.rotateCW90()
+    function changed() { retryBlob = undefined; saved = false; saveError = false; }
+    function updateSnapshot(value: EditorSnapshot) {
+        if (disposed) return;
+        snapshot = value;
+        const selected = value.annotations.find(item => item.id === value.selectedId);
+        if (selected) color = selected.color;
+        if (!saving) changed();
     }
-
-    function rotateCCW90() {
-        foreground.rotateCCW90()
+    function initializationFailed() {
+        if (!disposed) { initializationError = true; foreground?.setInteractive(false); }
     }
-
-    function drawArrow() {
-        drawingMode = false
-        foreground.drawArrow(color)
-    }
-
-    function drawCircle() {
-        drawingMode = false
-        foreground.drawCircle(color)
-    }
-
-    function drawText() {
-        drawingMode = false
-        foreground.drawText(color)
-    }
-
-    function drawRect() {
-        drawingMode = false
-        foreground.drawRect()
-    }
-
-    // Update drawing mode when button is pressed
     $effect(() => {
-        // Need this so that Svelte re-runs the code inside the condition on change
-        if (foreground === undefined)
+        if (ready && !announcedReady && !disposed) { announcedReady = true; onready?.(); }
+    });
+    onMount(() => {
+        let cancelled = false;
+        editorRoot.addEventListener('keydown', escape);
+        void tick().then(async () => {
+            if (cancelled || disposed) return;
+            try {
+                await foreground?.init({width: preparedImage.width, height: preparedImage.height});
+                if (!cancelled && !disposed) foregroundReady = true;
+            } catch { initializationFailed(); }
+        });
+        return () => { cancelled = true; editorRoot.removeEventListener('keydown', escape); };
+    });
+    onDestroy(() => { disposed = true; retryBlob = undefined; onerror?.(undefined); });
+    $effect(() => {
+        onerror?.(initializationError ? {
+            message:'Could not prepare the image editor. Try loading the image again.',
+            retryLabel:'Retry editor initialization', onretry,
+        } : saveError ? {
+            message:'Could not save the image. Your changes are kept. Try saving again.',
+            id:`${uid}-save-error`, retryLabel:'Retry save', dismissLabel:'Dismiss save error', disabled,
+            onretry:()=>void saveImage(true),
+            ondismiss:()=>{ saveError=false;void tick().then(()=>{if(!disposed)saveButton?.focus();}); },
+        } : undefined);
+    });
+
+    function orientation(action: 'flipH' | 'flipV' | 'cw' | 'ccw') {
+        if (disabled || !foreground) return;
+        changed();
+        if (action === 'flipH') flipH = !flipH;
+        else if (action === 'flipV') flipV = !flipV;
+        else {
+            if (action === 'cw') { rotation += 90; foreground.rotateCW90(); }
+            else { rotation -= 90; foreground.rotateCCW90(); }
+            rotation = ((rotation + 180) % 360 + 360) % 360 - 180;
+            foreground.setRotation(rotation);
+        }
+    }
+    function adjust(name: 'rotation' | 'brightness' | 'contrast', value: number) {
+        if (disabled || !Number.isFinite(value)) return;
+        changed();
+        if (name === 'rotation') { rotation = value; foreground?.setRotation(value); }
+        else if (name === 'brightness') brightness = value;
+        else contrast = value;
+    }
+    function aspect(value: boolean) {
+        if (disabled) return;
+        changed(); keepAspectRatio = value; foreground?.setKeepAspectRatio(value);
+    }
+    function setColor(value: string) {
+        if (disabled) return;
+        color = value;
+        if (snapshot.selectedId) annotation(snapshot.selectedId, { color: value });
+        if (drawingMode) foreground?.startDrawing(value);
+    }
+    function draw(type: 'arrow' | 'circle' | 'rectangle' | 'text' | 'freehand') {
+        if (disabled || !foreground) return;
+        changed();
+        if (type === 'freehand') {
+            drawingMode = !drawingMode;
+            if (drawingMode) foreground.startDrawing(color); else foreground.endDrawing();
             return;
-
-        if (drawingMode) {
-            foreground.startDrawing(color)
-        } else {
-            foreground.endDrawing()
         }
-    })
-
-    function deleteSelectedMarker() {
-        foreground.deleteMarker(activeMarker)
-        activeMarker = undefined
+        drawingMode = false; foreground.endDrawing();
+        if (type === 'arrow') foreground.drawArrow(color);
+        else if (type === 'circle') foreground.drawCircle(color);
+        else if (type === 'rectangle') foreground.drawRect(color);
+        else foreground.drawText(color);
     }
-
+    function escape(event: KeyboardEvent) {
+        if (event.isComposing) return;
+        if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
+            event.preventDefault();
+        }
+        if (event.key === 'Escape' && drawingMode && !disabled) {
+            drawingMode = false; foreground?.endDrawing(); event.preventDefault();
+        }
+    }
     function reset() {
-        flipH = false
-        flipV = false
-        rotation = 0
-
-        crop.keepAspectRatio = true
-
-        brightness = 1
-        contrast = 0
-
-        color = "#ffff00"
-        drawingMode = false
-
-        foreground.reset()
+        if (disabled) return;
+        changed(); rotation = 0; brightness = 1; contrast = 0; flipH = false; flipV = false;
+        keepAspectRatio = true; color = '#ffff00'; drawingMode = false;
+        foreground?.endDrawing(); foreground?.setRotation(0); foreground?.setKeepAspectRatio(true); foreground?.reset();
     }
-
-    async function saveImage() {
-        saving = true
-
-        await tick()
-
+    async function saveImage(retry = false) {
+        if (disabled || !foreground || !background || disposed) return;
+        const invalidInput = editorRoot.querySelector<HTMLInputElement>('input:invalid');
+        if (invalidInput) { invalidInput.reportValidity(); return; }
+        saving = true; saved = false; saveError = false; onbusy?.(true);
+        foreground.setInteractive(false);
+        const editorShadow = editorRoot.getRootNode() as ShadowRoot;
+        const restoreSaveFocus = editorShadow.querySelector('.ie-error')?.contains(editorShadow.activeElement) ?? false;
+        let exportCanvas: HTMLCanvasElement | undefined;
         try {
-            const imageBlob = await foreground.saveImage(background.exportCanvas())
-            await saveCallback(imageBlob)
-        } catch (e) {
-            saveError = e
+            await tick();
+            if (disposed) return;
+            let blob = retry ? retryBlob : undefined;
+            if (!blob) {
+                background.flush();
+                exportCanvas = background.exportCanvas();
+                blob = await foreground.saveImage(exportCanvas);
+                if (!(blob instanceof Blob) || blob.size === 0) throw new Error('Image encoding failed');
+                if (disposed) return;
+                retryBlob = blob;
+            }
+            await saveCallback(blob);
+            if (!disposed) { saved = true; retryBlob = undefined; }
+        } catch {
+            if (!disposed) saveError = true;
         } finally {
-            saving = false
+            if (exportCanvas) { exportCanvas.width = 0; exportCanvas.height = 0; }
+            if (!disposed) { saving = false; foreground?.setInteractive(ready); if (ready && drawingMode) foreground?.startDrawing(color); onbusy?.(false); if (restoreSaveFocus) void tick().then(() => { if (!disposed) saveButton?.focus(); }); }
         }
     }
-
-    onMount(async () => {
-        validate(originalImageBlob, validators)
-
-        const imageBitmap = await createImageBitmap(originalImageBlob)
-
-        await tick()
-
-        foreground.init(imageBitmap)
-    })
+    function annotation(id: string, change: Partial<AnnotationSnapshot>) { if (!disabled) { changed(); foreground?.updateAnnotation(id, change); } }
+    function remove(id: string) { if (!disabled) { changed(); foreground?.deleteMarker(id); } }
+    function order(id: string, direction: 'forward' | 'backward') { if (!disabled) { changed(); foreground?.moveAnnotation(id, direction); } }
 </script>
 
-<div class="ie-relative ie-flex ie-gap-3 ie-flex-col md:ie-flex-row">
-    <div class="ie-flex-auto ie-aspect-square ie-relative">
-        <div class="ie-relative ie-aspect-square ie-flex ie-items-center ie-justify-center ie-mx-auto">
-            <div class="ie-absolute ie-w-full ie-h-full">
-                <Background bind:this={background} {brightness}
-                            {contrast} {flipH} {flipV} imageBlob={originalImageBlob} {rotation}/>
-            </div>
-            <Foreground bind:this={foreground} bind:crop bind:rotation bind:activeMarker {markers} />
-        </div>
-
-        {#if warnings.length > 0}
-            <div class="ie-absolute ie-top-4 ie-left-4 ie-right-4 ie-flex ie-flex-col ie-gap-2">
-                {#each warnings as warning}
-                    <div class="ie-alert ie-alert-warning" role="alert">
-                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                            <path d="M12 9v4"/>
-                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
-                            <path d="M12 16h.01"/>
-                        </svg>
-                        <span>{warning}</span>
-                    </div>
+<section bind:this={editorRoot} class="ie-edit" aria-label="Image editor" aria-busy={(!ready && !initializationError) || saving}>
+    <p class="ie-status" role="status" aria-live="polite" aria-atomic="true">
+        {#if initializationError}Image editor unavailable.{:else if !ready}Preparing image…{:else if saving}Saving image…{:else if saved}Image saved.{/if}
+    </p>
+    <div class="ie-workspace">
+        <div bind:this={preview} class="ie-preview" tabindex="-1" role="group" aria-label="Image preview. Drag the crop handles to crop. Use the annotation controls to edit annotations.">
+            <div class="ie-background"><Background bind:this={background} source={preparedImage.source} width={preparedImage.width} height={preparedImage.height}
+                {brightness} {contrast} {flipH} {flipV} {rotation} onready={() => { if (!disposed) backgroundReady = true; }} onerror={initializationFailed} /></div>
+            <Foreground bind:this={foreground} onchange={updateSnapshot} onerror={initializationFailed} />
+            <div class="ie-warnings">
+                {#each preparedImage.warnings as warning, index}
+                    {#if !dismissedWarnings.includes(index)}<WarningAlert message={warning} ondismiss={() => dismissWarning(index)} />{/if}
                 {/each}
+                {#if snapshot.crop.warning && !cropWarningDismissed}<WarningAlert message="The crop extends outside the image. Empty areas will be gray." ondismiss={() => dismissWarning()} />{/if}
             </div>
-        {/if}
-    </div>
-    <div class="ie-flex-initial md:ie-w-52 ie-flex ie-flex-col ie-justify-between ie-gap-5">
-        <Toolbar bind:brightness bind:contrast bind:flipH bind:flipV bind:keepAspectRatio={crop.keepAspectRatio}
-                 bind:rotation rotateCW90={rotateCW90} rotateCCW90={rotateCCW90} onrotationchange={rotationChanged}
-                 cropWarning={crop.warning}
-                 bind:color bind:activeMarker bind:markers bind:drawingMode
-                 drawArrow={drawArrow} drawCircle={drawCircle} drawRect={drawRect} drawText={drawText}
-                 deleteMarker={deleteSelectedMarker} />
-
-        <div class="ie-flex ie-flex-col ie-gap-4">
-            <button class="ie-btn ie-w-full" onclick={reset}>
-                Reset changes
-            </button>
-
-            <button class="ie-btn ie-w-full"
-                    class:ie-btn-danger={saveError !== undefined}
-                    class:ie-btn-primary={saveError === undefined}
-                    disabled={(saveError !== undefined) || saving}
-                    onclick={saveImage}>
-                {#if saving}
-                    <span class="ie-loading ie-loading-spinner"></span>
-                    Saving
-                {:else}
-                    <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                         stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                        <path d="M5 12l5 5l10 -10"/>
-                    </svg>
-                    Save image
-                {/if}
-            </button>
         </div>
-    </div>
-
-    {#if saveError}
-        <div class="ie-absolute ie-bg-base-200/80 ie-w-full ie-h-full ie-z-1 ie-flex ie-flex-col ie-items-center ie-justify-center">
-            <div class="ie-card ie-shadow-sm ie-bg-base-100 ie-m-2">
-                <div class="ie-card-body">
-                    <div class="ie-alert ie-alert-error ie-mb-4">
-                        <svg fill="none" height="24" stroke="currentColor" stroke-linecap="round"
-                             stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="24"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
-                            <path d="M12 9v4"/>
-                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/>
-                            <path d="M12 16h.01"/>
-                        </svg>
-                        Error while uploading image
-                    </div>
-
-                    <div>
-                        Please provide the original file and the following message when contacting support:
-                    </div>
-
-                    <code class="ie-text-sm ie-bg-base-200 ie-p-2">
-                        [{new Date().toISOString()}]
-                        [{window.location.pathname}]
-                        {saveError}
-                    </code>
-
-                    <div>You can reload the page and try again in a few minutes.</div>
+        <div class="ie-panel">
+            <Toolbar {disabled} {snapshot} {rotation} {brightness} {contrast} {flipH} {flipV} {keepAspectRatio} {color} {drawingMode}
+                onorientation={orientation} onadjust={adjust} onaspect={aspect} oncolor={setColor} ondraw={draw}
+                ondelete={remove} onorder={order} />
+            <div class="ie-bottom-actions">
+                <div class="ie-actions">
+                    <button type="button" class="btn btn-outline" {disabled} onclick={reset}><RotateCcw size={20} aria-hidden="true" focusable="false" /><span>Reset</span></button>
+                    <button bind:this={saveButton} type="button" class="btn btn-primary" {disabled} aria-describedby={saveError ? `${uid}-save-error` : undefined} onclick={() => saveImage()}><Save size={20} aria-hidden="true" focusable="false" /><span>{saving ? 'Saving image…' : 'Save image'}</span></button>
                 </div>
             </div>
         </div>
-    {/if}
-</div>
+    </div>
+</section>
+
+<style>
+    .ie-edit { container-type: inline-size; min-width: 0; color: var(--ie-ui-text); }
+    .ie-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .ie-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .ie-preview { position: relative; width: 100%; aspect-ratio: 1; min-width: 0; align-self: start; background-color: var(--ie-checker-dark); background-image: conic-gradient(var(--ie-checker-light) 25%, var(--ie-checker-dark) 0 50%, var(--ie-checker-light) 0 75%, var(--ie-checker-dark) 0); background-size: 24px 24px; }
+    .ie-background { position: absolute; inset: 0; }
+    .ie-warnings { position: absolute; top: .75rem; left: .75rem; right: .75rem; z-index: 2; display: grid; gap: .5rem; max-height: calc(100% - 1.5rem); overflow-y: auto; padding: 3px; pointer-events: none; }
+    .ie-warnings :global(.ie-warning) { pointer-events: auto; }
+    .ie-preview:focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
+    .ie-panel { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; }
+    .ie-bottom-actions { display: grid; gap: .5rem; }
+    .ie-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem; }
+    .ie-actions button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; height: auto; padding: .5rem .75rem; white-space: normal; flex: 1 1 8rem; }
+    .ie-actions :global(svg) { flex-shrink: 0; }
+    button:focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
+    @container (min-width: 720px) { .ie-workspace { grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem); } .ie-preview { position: sticky; top: 1rem; } }
+    @media (forced-colors: active) { button:focus-visible { outline-color: Highlight; } .ie-preview { background-image: none; background-color: Canvas; } }
+</style>
