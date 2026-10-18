@@ -185,5 +185,5 @@ releases its bounded canvas probe.
 
 ## License
 
-Licensed under AGPL v3.0. See [LICENSE](LICENSE). For alternative licensing,
+Licensed under AGPL-3.0-only. See [LICENSE](LICENSE). For alternative licensing,
 contact [Kigun](https://www.kigun.org/).
