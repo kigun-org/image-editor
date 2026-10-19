@@ -5,7 +5,8 @@
     import Toolbar from './Toolbar.svelte';
     import WarningAlert from './WarningAlert.svelte';
     import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
-    import Save from '@lucide/svelte/icons/save';
+    import Check from '@lucide/svelte/icons/check';
+    import LoaderCircle from '@lucide/svelte/icons/loader-circle';
     import type { ErrorNotice, PreparedImage, EditorSnapshot, AnnotationSnapshot, SaveCallback } from '../types';
 
     interface Props { preparedImage: PreparedImage; saveCallback: SaveCallback; onready?: () => void; onbusy?: (busy: boolean) => void; onretry?: () => void; onerror?: (notice: ErrorNotice | undefined) => void; }
@@ -216,7 +217,10 @@
             <div class="ie-bottom-actions">
                 <div class="ie-actions">
                     <button type="button" class="btn btn-outline" {disabled} onclick={reset}><RotateCcw size={20} aria-hidden="true" focusable="false" /><span>Reset</span></button>
-                    <button bind:this={saveButton} type="button" class="btn btn-primary" {disabled} aria-describedby={saveError ? `${uid}-save-error` : undefined} onclick={() => saveImage()}><Save size={20} aria-hidden="true" focusable="false" /><span>{saving ? 'Saving image…' : 'Save image'}</span></button>
+                    <button bind:this={saveButton} type="button" class="btn btn-primary" {disabled} aria-busy={saving} aria-describedby={saveError ? `${uid}-save-error` : undefined} onclick={() => saveImage()}>
+                        {#if saving}<LoaderCircle class="ie-save-spinner" size={20} aria-hidden="true" focusable="false" />{:else}<Check size={20} aria-hidden="true" focusable="false" />{/if}
+                        <span>{saving ? 'Saving...' : 'Save image'}</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -235,8 +239,11 @@
     .ie-panel { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; }
     .ie-bottom-actions { display: grid; gap: .5rem; }
     .ie-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem; }
-    .ie-actions button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; height: auto; padding: .5rem .75rem; white-space: normal; flex: 1 1 8rem; }
+    .ie-actions button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-width: 44px; min-height: 44px; height: auto; padding: .5rem .75rem; white-space: nowrap; flex: 1 1 8rem; }
     .ie-actions :global(svg) { flex-shrink: 0; }
+    .ie-actions :global(.ie-save-spinner) { animation: ie-save-spin 1s linear infinite; }
+    @keyframes ie-save-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .ie-actions :global(.ie-save-spinner) { animation: none; } }
     button:focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
     @container (min-width: 720px) { .ie-workspace { grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem); } .ie-preview { position: sticky; top: 1rem; } }
     @media (forced-colors: active) { button:focus-visible { outline-color: Highlight; } .ie-preview { background-image: none; background-color: Canvas; } }

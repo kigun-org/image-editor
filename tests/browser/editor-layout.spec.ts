@@ -186,3 +186,25 @@ test('warnings overlay the preview, dismiss independently, and do not change exp
     return a.length === b.length && a.every((value, index) => value === b[index]);
   })).toBe(true);
 });
+for (const width of [320, 1100]) {
+  test(`save button keeps its size while saving at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openLibrary(page);
+    await imageBlob(page);
+    await page.evaluate(() => window.editorHarness.setSaveMode('first', 'pending'));
+    const editor = page.locator('.image-editor');
+    const save = editor.getByRole('button', { name: 'Save image', exact: true });
+    await expect(save.locator('svg.lucide-check')).toBeVisible();
+    const before = await save.boundingBox();
+    await save.click();
+    const saving = editor.getByRole('button', { name: 'Saving...', exact: true });
+    await expect(saving).toBeDisabled();
+    await expect(saving.locator('svg.ie-save-spinner')).toBeVisible();
+    const during = await saving.boundingBox();
+    expect(during!.width).toBe(before!.width);
+    expect(during!.height).toBe(before!.height);
+    await page.evaluate(() => window.editorHarness.settleSave('first'));
+    await expect(save).toBeEnabled();
+    await expect(save.locator('svg.lucide-check')).toBeVisible();
+  });
+}
