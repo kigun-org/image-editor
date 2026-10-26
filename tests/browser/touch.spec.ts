@@ -38,3 +38,35 @@ test('touch toolbar shows text labels without hover', async ({ page, isMobile },
   } else await expect(button.locator('.ie-touch-label')).toBeHidden();
   await expect(page.getByRole('tooltip')).toHaveCount(0);
 });
+
+test('touch can resize a crop from outside the visible corner handle', async ({ page, browserName, hasTouch }) => {
+  test.skip(browserName !== 'chromium' || !hasTouch, 'Requires Chromium touch input.');
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await openLibrary(page); await imageBlob(page);
+  const surface = page.locator('.upper-canvas');
+  await surface.scrollIntoViewIfNeeded();
+  const box = (await surface.boundingBox())!;
+  const session = await page.context().newCDPSession(page);
+  const x = box.x + box.width - 26, y = box.y + box.height * .875 - 26;
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  // Start 26 px from the corner in each direction: outside the previous
+  // 44 px target, but inside the larger 64 px touch target.
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let step = 1; step <= 8; step++) {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - step * 8, y: y - step * 6 }] });
+  }
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await session.detach();
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+  await page.getByRole('button', { name: 'Save image', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.editorHarness.saved('first').length)).toBe(1);
+  const dimensions = await page.evaluate(async () => {
+    const bitmap = await createImageBitmap(window.editorHarness.saved('first')[0]);
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return size;
+  });
+  expect(dimensions.width).toBeLessThan(380);
+  expect(dimensions.height).toBeLessThan(285);
+  expect(dimensions.width / dimensions.height).toBeCloseTo(4 / 3, 1);
+});

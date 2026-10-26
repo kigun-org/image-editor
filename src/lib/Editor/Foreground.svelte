@@ -2,6 +2,7 @@
 import { onDestroy } from 'svelte';
 import { Canvas, Circle, Group, IText, Path, PencilBrush, Point, Polyline, Rect, type FabricObject } from 'fabric/es';
 import { canvasBlob } from '../utils';
+import { cropExtendsOutsideImage } from '../cropGeometry';
 import type { AnnotationSnapshot, CropSnapshot, EditorSnapshot } from '../types';
 interface Props {
     onchange?: (snapshot: EditorSnapshot) => void;
@@ -9,6 +10,9 @@ interface Props {
 }
 let { onchange, onerror }: Props = $props();
 let canvasElement: HTMLCanvasElement;
+let foregroundElement: HTMLDivElement;
+let resizeObserver: ResizeObserver | undefined;
+let controlScale = 1;
 let textarea: HTMLDivElement;
 let canvas: Canvas | undefined;
 let crop: Rect | undefined;
@@ -41,7 +45,8 @@ function objectSnapshot(object: FabricObject): AnnotationSnapshot {
 function cropSnapshot(): CropSnapshot {
     if (!crop)
         return { x: 0, y: 0, width: 0, height: 0, warning: false };
-    return { x: crop.left, y: crop.top, width: crop.getScaledWidth(), height: crop.getScaledHeight(), warning: !!placeholder && !crop.isContainedWithinObject(placeholder) };
+    const bounds = { x: crop.left, y: crop.top, width: crop.getScaledWidth(), height: crop.getScaledHeight() };
+    return { ...bounds, warning: !!placeholder && cropExtendsOutsideImage(bounds, { centerX: edge / 2, centerY: edge / 2, width: sourceWidth, height: sourceHeight, angle: placeholder.angle }) };
 }
 export function getSnapshot(): EditorSnapshot {
     const c = canvas;
@@ -170,8 +175,40 @@ function quarterTurn(clockwise: boolean) {
     cropRatio = b.height / b.width;
     refresh();
 }
+function controlStyle() {
+    // Fabric control sizes use canvas units; the preview is scaled with CSS.
+    return { cornerSize: 20 * controlScale, touchCornerSize: 64 * controlScale, borderScaleFactor: 2 * controlScale, borderOpacityWhenMoving: 1 };
+}
+function resizeControls() {
+    if (!canvas) return;
+    const width = canvas.upperCanvasEl.getBoundingClientRect().width;
+    if (width <= 0) return;
+    controlScale = edge / width;
+    for (const object of [crop, ...annotations.keys()]) {
+        if (!object) continue;
+        object.set(controlStyle());
+        object.setCoords();
+    }
+    canvas.calcOffset();
+    canvas.requestRenderAll();
+}
 function decorate(object: FabricObject) {
-    object.set({ originX: 'left', originY: 'top', cornerSize: Math.max(8, edge * .025), touchCornerSize: Math.max(16, edge * .05), borderScaleFactor: Math.max(1, edge * .004), transparentCorners: false, lockScalingFlip: true, minScaleLimit: .05 });
+    object.set({ originX: 'left', originY: 'top', ...controlStyle(), transparentCorners: false, lockScalingFlip: true, minScaleLimit: .05 });
+}
+function constrainCropScale(originX: number | 'left' | 'center' | 'right', originY: number | 'top' | 'center' | 'bottom') {
+    if (!crop) return;
+    const anchor = crop.getPositionByOrigin(originX, originY);
+    const width = crop.getScaledWidth(), height = crop.getScaledHeight();
+    if (keepAspect) {
+        const factor = Math.min(1, edge / width, edge / height);
+        crop.set({ scaleX: crop.scaleX * factor, scaleY: crop.scaleY * factor });
+    } else {
+        crop.set({ scaleX: Math.min(width, edge) / crop.width, scaleY: Math.min(height, edge) / crop.height });
+    }
+    crop.setPositionByOrigin(anchor, originX, originY);
+    // Preserve the opposite corner unless the crop must shift to stay in bounds.
+    crop.set({ left: Math.max(0, Math.min(edge - crop.getScaledWidth(), crop.left)), top: Math.max(0, Math.min(edge - crop.getScaledHeight(), crop.top)) });
+    refresh();
 }
 function add(object: FabricObject, type: string) {
     if (!enabled)
@@ -333,6 +370,9 @@ export function init(dimensions: {
         canvas.freeDrawingBrush = new PencilBrush(canvas);
         canvas.freeDrawingBrush.width = edge * .005;
         canvas.setActiveObject(crop);
+        resizeControls();
+        resizeObserver = new ResizeObserver(resizeControls);
+        resizeObserver.observe(foregroundElement);
         canvas.on('object:moving', event => {
             if (event.target === crop) {
                 const b = cropSnapshot();
@@ -344,13 +384,18 @@ export function init(dimensions: {
         });
         canvas.on('object:scaling', event => {
             if (event.target === crop) {
-                const b = cropSnapshot();
-                updateCrop({ x: b.x, y: b.y, width: b.width, height: b.height });
+                // Keep base dimensions stable until Fabric completes this transform.
+                constrainCropScale(event.transform.originX, event.transform.originY);
             }
             else
                 notify();
         });
-        canvas.on('object:modified', () => refresh());
+        canvas.on('object:modified', event => {
+            if (event.target === crop) {
+                const b = cropSnapshot();
+                updateCrop({ x: b.x, y: b.y, width: b.width, height: b.height });
+            } else refresh();
+        });
         canvas.on('selection:created', notify);
         canvas.on('selection:updated', notify);
         canvas.on('selection:cleared', notify);
@@ -373,6 +418,7 @@ export function init(dimensions: {
 }
 onDestroy(() => {
     destroyed = true;
+    resizeObserver?.disconnect();
     clearGrid();
     annotations.clear();
     if (canvas) {
@@ -383,5 +429,5 @@ onDestroy(() => {
     }
 });
 </script>
-<div class="ie-foreground"><canvas bind:this={canvasElement}></canvas><div bind:this={textarea} class="ie-textarea-host"></div></div>
-<style>.ie-foreground{position:absolute;inset:0}.ie-foreground :global(.canvas-container){width:100%!important;height:100%!important}.ie-textarea-host{position:absolute;left:0;top:0}</style>
+<div bind:this={foregroundElement} class="ie-foreground"><canvas bind:this={canvasElement}></canvas><div bind:this={textarea} class="ie-textarea-host"></div></div>
+<style>.ie-foreground{position:absolute;inset:0;z-index:1}.ie-foreground :global(.canvas-container){width:100%!important;height:100%!important}.ie-textarea-host{position:absolute;left:0;top:0}</style>

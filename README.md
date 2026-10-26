@@ -128,7 +128,9 @@ The large-input case uses real 80 MP, 8192-edge, and 50 MiB inputs. Run it on a
 machine with sufficient memory, outside shared PR runners.
 
 The accessibility target is WCAG 2.2 AA. Native controls support keyboard editing of adjustments and annotations.
-Crop position and size use the canvas handles. The toolbar keeps the aspect-ratio
+Crop position and size use the canvas handles. Crop and annotation handles are
+20 display pixels wide, with 64-pixel touch targets. These sizes stay constant
+when the preview resizes. The toolbar keeps the aspect-ratio
 checkbox and omits numeric crop fields and nudge buttons. Toolbar actions use Lucide icons with
 accessible names and 44-pixel minimum targets. Tooltips appear on hover and
 keyboard focus, remain open while hovered, and close with Escape. Touch devices

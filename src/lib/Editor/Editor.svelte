@@ -231,8 +231,8 @@
     .ie-edit { container-type: inline-size; min-width: 0; color: var(--ie-ui-text); }
     .ie-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .ie-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-    .ie-preview { position: relative; width: 100%; aspect-ratio: 1; min-width: 0; align-self: start; background-color: var(--ie-checker-dark); background-image: conic-gradient(var(--ie-checker-light) 25%, var(--ie-checker-dark) 0 50%, var(--ie-checker-light) 0 75%, var(--ie-checker-dark) 0); background-size: 24px 24px; }
-    .ie-background { position: absolute; inset: 0; }
+    .ie-preview { isolation: isolate; position: relative; width: 100%; aspect-ratio: 1; min-width: 0; align-self: start; background-color: var(--ie-checker-dark); background-image: conic-gradient(var(--ie-checker-light) 25%, var(--ie-checker-dark) 0 50%, var(--ie-checker-light) 0 75%, var(--ie-checker-dark) 0); background-size: 24px 24px; }
+    .ie-background { position: absolute; inset: 0; z-index: 0; }
     .ie-warnings { position: absolute; top: .75rem; left: .75rem; right: .75rem; z-index: 2; display: grid; gap: .5rem; max-height: calc(100% - 1.5rem); overflow-y: auto; padding: 3px; pointer-events: none; }
     .ie-warnings :global(.ie-warning) { pointer-events: auto; }
     .ie-preview:focus-visible { outline: 3px solid var(--ie-ui-focus); outline-offset: 3px; }
